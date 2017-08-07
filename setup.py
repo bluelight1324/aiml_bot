@@ -1,5 +1,5 @@
 # Command to build:
-from distutils.core import setup
+from setuptools import setup
 import glob
 
 package_prefix = "Lib/site-packages/aiml"

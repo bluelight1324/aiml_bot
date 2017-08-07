@@ -1,1 +1,4 @@
 *.pyc
+.idea/
+PyAIML.egg-info/
+aiml/__pycache__/

@@ -1,12 +1,12 @@
 # -*- coding: latin-1 -*-
 """This file contains the public interface to the aiml module."""
-import AimlParser
-import DefaultSubs
-import Utils
-from PatternMgr import PatternMgr
-from WordSub import WordSub
+from . import utilities
+from .aiml_parser import create_parser
+from .pattern_manager import PatternMgr
+from .word_substitutions import WordSub
+from .default_substitutions import defaultGender, defaultPerson, defaultPerson2, defaultNormal\
 
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import copy
 import glob
 import os
@@ -21,9 +21,9 @@ import xml.sax
 
 class Kernel:
     # module constants
-    _globalSessionID = "_global" # key of the global session (duh)
-    _maxHistorySize = 10 # maximum length of the _inputs and _responses lists
-    _maxRecursionDepth = 100 # maximum number of recursive <srai>/<sr> tags before the response is aborted.
+    _globalSessionID = "_global"  # key of the global session (duh)
+    _maxHistorySize = 10  # maximum length of the _inputs and _responses lists
+    _maxRecursionDepth = 100  # maximum number of recursive <srai>/<sr> tags before the response is aborted.
     # special predicate keys
     _inputHistory = "_inputHistory"     # keys to a queue (list) of recent user input
     _outputHistory = "_outputHistory"   # keys to a queue (list) of recent responses.
@@ -45,12 +45,13 @@ class Kernel:
         self.setBotPredicate("name", "Nameless")
 
         # set up the word substitutors (subbers):
-        self._subbers = {}
-        self._subbers['gender'] = WordSub(DefaultSubs.defaultGender)
-        self._subbers['person'] = WordSub(DefaultSubs.defaultPerson)
-        self._subbers['person2'] = WordSub(DefaultSubs.defaultPerson2)
-        self._subbers['normal'] = WordSub(DefaultSubs.defaultNormal)
-        
+        self._subbers = {
+            'gender': WordSub(defaultGender),
+            'person': WordSub(defaultPerson),
+            'person2': WordSub(defaultPerson2),
+            'normal': WordSub(defaultNormal)
+        }
+
         # set up the element processors
         self._elementProcessors = {
             "bot":          self._processBot,
@@ -86,7 +87,7 @@ class Kernel:
             "version":      self._processVersion,
         }
 
-    def bootstrap(self, brainFile = None, learnFiles = [], commands = []):
+    def bootstrap(self, brainFile=None, learnFiles=(), commands=()):
         """Prepare a Kernel object for use.
 
         If a brainFile argument is provided, the Kernel attempts to
@@ -105,23 +106,23 @@ class Kernel:
 
         # learnFiles might be a string, in which case it should be
         # turned into a single-element list.
-        learns = learnFiles
-        try: learns = [ learnFiles + "" ]
-        except: pass
+        if isinstance(learnFiles, str):
+            learns = [learnFiles]
+        else:
+            learns = learnFiles
         for file in learns:
             self.learn(file)
             
         # ditto for commands
-        cmds = commands
-        try: cmds = [ commands + "" ]
-        except: pass
-        for cmd in cmds:
-            print self._respond(cmd, self._globalSessionID)
+        if isinstance(commands, str):
+            commands = [commands]
+        for cmd in commands:
+            print(self._respond(cmd, self._globalSessionID))
             
         if self._verboseMode:
-            print "Kernel bootstrap completed in %.2f seconds" % (time.clock() - start)
+            print("Kernel bootstrap completed in %.2f seconds" % (time.clock() - start))
 
-    def verbose(self, isVerbose = True):
+    def verbose(self, isVerbose=True):
         """Enable/disable verbose output mode."""
         self._verboseMode = isVerbose
 
@@ -137,12 +138,12 @@ class Kernel:
     def resetBrain(self):
         """Reset the brain to its initial state.
 
-        This is essentially equivilant to:
+        This is essentially equivalent to:
             del(kern)
             kern = aiml.Kernel()
 
         """
-        del(self._brain)
+        del self._brain
         self.__init__()
 
     def loadBrain(self, filename):
@@ -152,22 +153,24 @@ class Kernel:
         NOTE: the current contents of the 'brain' will be discarded!
 
         """
-        if self._verboseMode: print "Loading brain from %s..." % filename,
+        if self._verboseMode:
+            print("Loading brain from %s..." % filename,)
         start = time.clock()
         self._brain.restore(filename)
         if self._verboseMode:
             end = time.clock() - start
-            print "done (%d categories in %.2f seconds)" % (self._brain.numTemplates(), end)
+            print("done (%d categories in %.2f seconds)" % (self._brain.numTemplates(), end))
 
     def saveBrain(self, filename):
         """Dump the contents of the bot's brain to a file on disk."""
-        if self._verboseMode: print "Saving brain to %s..." % filename,
+        if self._verboseMode:
+            print("Saving brain to %s..." % filename,)
         start = time.clock()
         self._brain.save(filename)
         if self._verboseMode:
-            print "done (%.2f seconds)" % (time.clock() - start)
+            print("done (%.2f seconds)" % (time.clock() - start))
 
-    def getPredicate(self, name, sessionID = _globalSessionID):
+    def getPredicate(self, name, sessionID=_globalSessionID):
         """Retrieve the current value of the predicate 'name' from the
         specified session.
 
@@ -175,10 +178,12 @@ class Kernel:
         string is returned.
 
         """
-        try: return self._sessions[sessionID][name]
-        except KeyError: return ""
+        try:
+            return self._sessions[sessionID][name]
+        except KeyError:
+            return ""
 
-    def setPredicate(self, name, value, sessionID = _globalSessionID):
+    def setPredicate(self, name, value, sessionID=_globalSessionID):
         """Set the value of the predicate 'name' in the specified
         session.
 
@@ -187,7 +192,7 @@ class Kernel:
         created.
 
         """
-        self._addSession(sessionID) # add the session, if it doesn't already exist.
+        self._addSession(sessionID)  # add the session, if it doesn't already exist.
         self._sessions[sessionID][name] = value
 
     def getBotPredicate(self, name):
@@ -196,8 +201,10 @@ class Kernel:
         If name is not a valid bot predicate, the empty string is returned.        
 
         """
-        try: return self._botPredicates[name]
-        except KeyError: return ""
+        try:
+            return self._botPredicates[name]
+        except KeyError:
+            return ""
 
     def setBotPredicate(self, name, value):
         """Set the value of the specified bot predicate.
@@ -221,26 +228,26 @@ class Kernel:
         The file must be in the Windows-style INI format (see the
         standard ConfigParser module docs for information on this
         format).  Each section of the file is loaded into its own
-        substituter.
+        substitutor.
 
         """
-        inFile = file(filename)
+        inFile = open(filename)
         parser = ConfigParser()
-        parser.readfp(inFile, filename)
+        parser.read_file(inFile, filename)
         inFile.close()
         for s in parser.sections():
             # Add a new WordSub instance for this section.  If one already
             # exists, delete it.
-            if self._subbers.has_key(s):
+            if s in self._subbers:
                 del(self._subbers[s])
             self._subbers[s] = WordSub()
             # iterate over the key,value pairs and add them to the subber
-            for k,v in parser.items(s):
-                self._subbers[s][k] = v
+            for key, v in parser.items(s):
+                self._subbers[s][key] = v
 
     def _addSession(self, sessionID):
         """Create a new session with the specified ID string."""
-        if self._sessions.has_key(sessionID):
+        if sessionID in self._sessions:
             return
         # Create the session.
         self._sessions[sessionID] = {
@@ -252,10 +259,10 @@ class Kernel:
         
     def _deleteSession(self, sessionID):
         """Delete the specified session."""
-        if self._sessions.has_key(sessionID):
-            _sessions.pop(sessionID)
+        if sessionID in self._sessions:
+            self._sessions.pop(sessionID)
 
-    def getSessionData(self, sessionID = None):
+    def getSessionData(self, sessionID=None):
         """Return a copy of the session data dictionary for the
         specified session.
 
@@ -263,12 +270,12 @@ class Kernel:
         *all* of the individual session dictionaries.
 
         """
-        s = None
-        if sessionID is not None:
-            try: s = self._sessions[sessionID]
-            except KeyError: s = {}
-        else:
+        if sessionID is None:
             s = self._sessions
+        elif sessionID in self._sessions:
+            s = self._sessions[sessionID]
+        else:
+            s = {}
         return copy.deepcopy(s)
 
     def learn(self, filename):
@@ -279,33 +286,38 @@ class Kernel:
 
         """
         for f in glob.glob(filename):
-            if self._verboseMode: print "Loading %s..." % f,
+            if self._verboseMode:
+                print("Loading %s..." % f,)
             start = time.clock()
             # Load and parse the AIML file.
-            parser = AimlParser.create_parser()
+            parser = create_parser()
             handler = parser.getContentHandler()
             handler.setEncoding(self._textEncoding)
-            try: parser.parse(f)
-            except xml.sax.SAXParseException, msg:
-                err = "\nFATAL PARSE ERROR in file %s:\n%s\n" % (f,msg)
+            try:
+                parser.parse(f)
+            except xml.sax.SAXParseException as msg:
+                err = "\nFATAL PARSE ERROR in file %s:\n%s\n" % (f, msg)
                 sys.stderr.write(err)
                 continue
             # store the pattern/template pairs in the PatternMgr.
-            for key,tem in handler.categories.items():
-                self._brain.add(key,tem)
+            for key, tem in handler.categories.items():
+                self._brain.add(*key, tem)
             # Parsing was successful.
             if self._verboseMode:
-                print "done (%.2f seconds)" % (time.clock() - start)
+                print("done (%.2f seconds)" % (time.clock() - start))
 
-    def respond(self, input, sessionID = _globalSessionID):
+    def respond(self, text, sessionID=_globalSessionID):
         """Return the Kernel's response to the input string."""
-        if len(input) == 0:
+        if len(text) == 0:
             return ""
 
         #ensure that input is a unicode string
-        try: input = input.decode(self._textEncoding, 'replace')
-        except UnicodeError: pass
-        except AttributeError: pass
+        try:
+            text = text
+        except UnicodeError:
+            pass
+        except AttributeError:
+            pass
         
         # prevent other threads from stomping all over us.
         self._respondLock.acquire()
@@ -314,7 +326,7 @@ class Kernel:
         self._addSession(sessionID)
 
         # split the input into discrete sentences
-        sentences = Utils.sentences(input)
+        sentences = utilities.sentences(text)
         finalResponse = ""
         for s in sentences:
             # Add the input to the history list before fetching the
@@ -343,39 +355,43 @@ class Kernel:
         
         # release the lock and return
         self._respondLock.release()
-        try: return finalResponse.encode(self._textEncoding)
-        except UnicodeError: return finalResponse
+        try:
+            return finalResponse
+        except UnicodeError:
+            return finalResponse
 
     # This version of _respond() just fetches the response for some input.
     # It does not mess with the input and output histories.  Recursive calls
     # to respond() spawned from tags like <srai> should call this function
     # instead of respond().
-    def _respond(self, input, sessionID):
+    def _respond(self, text, sessionID):
         """Private version of respond(), does the real work."""
-        if len(input) == 0:
+        if len(text) == 0:
             return ""
 
         # guard against infinite recursion
         inputStack = self.getPredicate(self._inputStack, sessionID)
         if len(inputStack) > self._maxRecursionDepth:
             if self._verboseMode:
-                err = "WARNING: maximum recursion depth exceeded (input='%s')" % input.encode(self._textEncoding, 'replace')
+                err = "WARNING: maximum recursion depth exceeded (input='%s')" % text
                 sys.stderr.write(err)
             return ""
 
         # push the input onto the input stack
         inputStack = self.getPredicate(self._inputStack, sessionID)
-        inputStack.append(input)
+        inputStack.append(text)
         self.setPredicate(self._inputStack, inputStack, sessionID)
 
         # run the input through the 'normal' subber
-        subbedInput = self._subbers['normal'].sub(input)
+        subbedInput = self._subbers['normal'].sub(text)
 
         # fetch the bot's previous response, to pass to the match()
         # function as 'that'.
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
-        try: that = outputHistory[-1]
-        except IndexError: that = ""
+        try:
+            that = outputHistory[-1]
+        except IndexError:
+            that = ""
         subbedThat = self._subbers['normal'].sub(that)
 
         # fetch the current topic
@@ -387,7 +403,7 @@ class Kernel:
         elem = self._brain.match(subbedInput, subbedThat, subbedTopic)
         if elem is None:
             if self._verboseMode:
-                err = "WARNING: No match found for input: %s\n" % input.encode(self._textEncoding)
+                err = "WARNING: No match found for input: %s\n" % text
                 sys.stderr.write(err)
         else:
             # Process the element into a response string.
@@ -402,7 +418,7 @@ class Kernel:
         
         return response
 
-    def _processElement(self,elem, sessionID):
+    def _processElement(self, elem, sessionID):
         """Process an AIML element.
 
         The first item of the elem list is the name of the element's
@@ -413,23 +429,22 @@ class Kernel:
         element's handler function.
 
         """
-        try:
-            handlerFunc = self._elementProcessors[elem[0]]
-        except:
-            # Oops -- there's no handler function for this element
-            # type!
+        element_name = elem[0]
+        if element_name not in self._elementProcessors:
+            # Oops -- there's no handler function for this element type!
             if self._verboseMode:
-                err = "WARNING: No handler found for <%s> element\n" % elem[0].encode(self._textEncoding, 'replace')
+                err = "WARNING: No handler found for <%s> element\n" % elem[0]
                 sys.stderr.write(err)
             return ""
+        handlerFunc = self._elementProcessors[element_name]
         return handlerFunc(elem, sessionID)
 
-
-    ######################################################
-    ### Individual element-processing functions follow ###
-    ######################################################
+    ##################################################
+    # Individual element-processing functions follow #
+    ##################################################
 
     # <bot>
+    # noinspection PyUnusedLocal
     def _processBot(self, elem, sessionID):
         """Process a <bot> AIML element.
 
@@ -474,80 +489,84 @@ class Kernel:
         attributes.
 
         """        
-        attr = None
         response = ""
         attr = elem[1]
         
         # Case #1: test the value of a specific predicate for a
         # specific value.
-        if attr.has_key('name') and attr.has_key('value'):
+        if 'name' in attr and 'value' in attr:
             val = self.getPredicate(attr['name'], sessionID)
             if val == attr['value']:
                 for e in elem[2:]:
-                    response += self._processElement(e,sessionID)
+                    response += self._processElement(e, sessionID)
                 return response
         else:
             # Case #2 and #3: Cycle through <li> contents, testing a
             # name and value pair for each one.
             try:
                 name = None
-                if attr.has_key('name'):
+                if 'name' in attr:
                     name = attr['name']
-                # Get the list of <li> elemnents
-                listitems = []
+                # Get the list of <li> elements
+                list_items = []
                 for e in elem[2:]:
                     if e[0] == 'li':
-                        listitems.append(e)
-                # if listitems is empty, return the empty string
-                if len(listitems) == 0:
+                        list_items.append(e)
+                # if list_items is empty, return the empty string
+                if len(list_items) == 0:
                     return ""
                 # iterate through the list looking for a condition that
                 # matches.
                 foundMatch = False
-                for li in listitems:
+                for li in list_items:
                     try:
                         liAttr = li[1]
                         # if this is the last list item, it's allowed
                         # to have no attributes.  We just skip it for now.
-                        if len(liAttr.keys()) == 0 and li == listitems[-1]:
+                        if len(liAttr.keys()) == 0 and li == list_items[-1]:
                             continue
                         # get the name of the predicate to test
-                        liName = name
-                        if liName == None:
-                            liName = liAttr['name']
+                        li_name = name
+                        if li_name is None:
+                            li_name = liAttr['name']
                         # get the value to check against
                         liValue = liAttr['value']
                         # do the test
-                        if self.getPredicate(liName, sessionID) == liValue:
+                        if self.getPredicate(li_name, sessionID) == liValue:
                             foundMatch = True
-                            response += self._processElement(li,sessionID)
+                            response += self._processElement(li, sessionID)
                             break
                     except:
                         # No attributes, no name/value attributes, no
                         # such predicate/session, or processing error.
-                        if self._verboseMode: print "Something amiss -- skipping listitem", li
+                        if self._verboseMode:
+                            print("Something amiss -- skipping list item", li)
                         raise
                 if not foundMatch:
-                    # Check the last element of listitems.  If it has
+                    # Check the last element of list_items.  If it has
                     # no 'name' or 'value' attribute, process it.
                     try:
-                        li = listitems[-1]
+                        li = list_items[-1]
                         liAttr = li[1]
-                        if not (liAttr.has_key('name') or liAttr.has_key('value')):
+                        if not ('name' in liAttr or 'value' in liAttr):
                             response += self._processElement(li, sessionID)
                     except:
-                        # listitems was empty, no attributes, missing
+                        # list_items was empty, no attributes, missing
                         # name/value attributes, or processing error.
-                        if self._verboseMode: print "error in default listitem"
+                        if self._verboseMode:
+                            print("error in default list item")
                         raise
             except:
                 # Some other catastrophic cataclysm
-                if self._verboseMode: print "catastrophic condition failure"
+                if self._verboseMode:
+                    print("catastrophic condition failure")
                 raise
         return response
         
     # <date>
-    def _processDate(self, elem, sessionID):
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def _processDate(elem, sessionID):
         """Process a <date> AIML element.
 
         <date> elements resolve to the current date and time.  The
@@ -571,12 +590,12 @@ class Kernel:
         return string.capwords(response)
 
     # <gender>
-    def _processGender(self,elem, sessionID):
+    def _processGender(self, elem, sessionID):
         """Process a <gender> AIML element.
 
         <gender> elements process their contents, and then swap the
         gender of any third-person singular pronouns in the result.
-        This subsitution is handled by the aiml.WordSub module.
+        This substitution is handled by the aiml.WordSub module.
 
         """
         response = ""
@@ -606,14 +625,16 @@ class Kernel:
         <gossip> elements are used to capture and store user input in
         an implementation-defined manner, theoretically allowing the
         bot to learn from the people it chats with.  I haven't
-        descided how to define my implementation, so right now
+        decided how to define my implementation, so right now
         <gossip> behaves identically to <think>.
 
         """        
         return self._processThink(elem, sessionID)
 
     # <id>
-    def _processId(self, elem, sessionID):
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def _processId(elem, sessionID):
         """ Process an <id> AIML element.
 
         <id> elements return a unique "user id" for a specific
@@ -637,9 +658,12 @@ class Kernel:
 
         """        
         inputHistory = self.getPredicate(self._inputHistory, sessionID)
-        try: index = int(elem[1]['index'])
-        except: index = 1
-        try: return inputHistory[-index]
+        try:
+            index = int(elem[1]['index'])
+        except Exception:
+            index = 1
+        try:
+            return inputHistory[-index]
         except IndexError:
             if self._verboseMode:
                 err = "No such index %d while processing <input> element.\n" % index
@@ -675,7 +699,7 @@ class Kernel:
         return ""
 
     # <li>
-    def _processLi(self,elem, sessionID):
+    def _processLi(self, elem, sessionID):
         """Process an <li> AIML element.
 
         Optional attribute elements:
@@ -694,7 +718,7 @@ class Kernel:
         return response
 
     # <lowercase>
-    def _processLowercase(self,elem, sessionID):
+    def _processLowercase(self, elem, sessionID):
         """Process a <lowercase> AIML element.
 
         <lowercase> elements process their contents recursively, and
@@ -704,15 +728,15 @@ class Kernel:
         response = ""
         for e in elem[2:]:
             response += self._processElement(e, sessionID)
-        return string.lower(response)
+        return response.lower()
 
     # <person>
-    def _processPerson(self,elem, sessionID):
+    def _processPerson(self, elem, sessionID):
         """Process a <person> AIML element.
 
         <person> elements process their contents recursively, and then
         convert all pronouns in the results from 1st person to 2nd
-        person, and vice versa.  This subsitution is handled by the
+        person, and vice versa.  This substitution is handled by the
         aiml.WordSub module.
 
         If the <person> tag is used atomically (e.g. <person/>), it is
@@ -723,16 +747,16 @@ class Kernel:
         for e in elem[2:]:
             response += self._processElement(e, sessionID)
         if len(elem[2:]) == 0:  # atomic <person/> = <person><star/></person>
-            response = self._processElement(['star',{}], sessionID)    
+            response = self._processElement(['star', {}], sessionID)
         return self._subbers['person'].sub(response)
 
     # <person2>
-    def _processPerson2(self,elem, sessionID):
+    def _processPerson2(self, elem, sessionID):
         """Process a <person2> AIML element.
 
         <person2> elements process their contents recursively, and then
         convert all pronouns in the results from 1st person to 3rd
-        person, and vice versa.  This subsitution is handled by the
+        person, and vice versa.  This substitution is handled by the
         aiml.WordSub module.
 
         If the <person2> tag is used atomically (e.g. <person2/>), it is
@@ -743,7 +767,7 @@ class Kernel:
         for e in elem[2:]:
             response += self._processElement(e, sessionID)
         if len(elem[2:]) == 0:  # atomic <person2/> = <person2><star/></person2>
-            response = self._processElement(['star',{}], sessionID)
+            response = self._processElement(['star', {}], sessionID)
         return self._subbers['person2'].sub(response)
         
     # <random>
@@ -758,19 +782,19 @@ class Kernel:
         ignored.
 
         """
-        listitems = []
+        list_items = []
         for e in elem[2:]:
             if e[0] == 'li':
-                listitems.append(e)
-        if len(listitems) == 0:
+                list_items.append(e)
+        if len(list_items) == 0:
             return ""
                 
-        # select and process a random listitem.
-        random.shuffle(listitems)
-        return self._processElement(listitems[0], sessionID)
+        # select and process a random list item.
+        random.shuffle(list_items)
+        return self._processElement(list_items[0], sessionID)
         
     # <sentence>
-    def _processSentence(self,elem, sessionID):
+    def _processSentence(self, elem, sessionID):
         """Process a <sentence> AIML element.
 
         <sentence> elements process their contents recursively, and
@@ -782,11 +806,10 @@ class Kernel:
             response += self._processElement(e, sessionID)
         try:
             response = response.strip()
-            words = string.split(response, " ", 1)
-            words[0] = string.capitalize(words[0])
-            response = string.join(words)
-            return response
-        except IndexError: # response was empty
+            words = response.split(' ', maxsplit=1)
+            words[0] = words[0].capitalize()
+            return ' '.join(words)
+        except IndexError:  # response was empty
             return ""
 
     # <set>
@@ -808,7 +831,8 @@ class Kernel:
         return value
 
     # <size>
-    def _processSize(self,elem, sessionID):
+    # noinspection PyUnusedLocal
+    def _processSize(self, elem, sessionID):
         """Process a <size> AIML element.
 
         <size> elements return the number of AIML categories currently
@@ -818,18 +842,19 @@ class Kernel:
         return str(self.numCategories())
 
     # <sr>
-    def _processSr(self,elem,sessionID):
+    # noinspection PyUnusedLocal
+    def _processSr(self, elem, sessionID):
         """Process an <sr> AIML element.
 
         <sr> elements are shortcuts for <srai><star/></srai>.
 
         """
-        star = self._processElement(['star',{}], sessionID)
+        star = self._processElement(['star', {}], sessionID)
         response = self._respond(star, sessionID)
         return response
 
     # <srai>
-    def _processSrai(self,elem, sessionID):
+    def _processSrai(self, elem, sessionID):
         """Process a <srai> AIML element.
 
         <srai> elements recursively process their contents, and then
@@ -858,21 +883,25 @@ class Kernel:
         would evaluate to "Tom Smith".
 
         """
-        try: index = int(elem[1]['index'])
-        except KeyError: index = 1
+        try:
+            index = int(elem[1]['index'])
+        except KeyError:
+            index = 1
         # fetch the user's last input
         inputStack = self.getPredicate(self._inputStack, sessionID)
-        input = self._subbers['normal'].sub(inputStack[-1])
+        text_input = self._subbers['normal'].sub(inputStack[-1])
         # fetch the Kernel's last response (for 'that' context)
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
-        try: that = self._subbers['normal'].sub(outputHistory[-1])
-        except: that = "" # there might not be any output yet
+        try:
+            that = self._subbers['normal'].sub(outputHistory[-1])
+        except Exception:
+            that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
-        response = self._brain.star("star", input, that, topic, index)
+        response = self._brain.star("star", text_input, that, topic, index)
         return response
     
     # <system>
-    def _processSystem(self,elem, sessionID):
+    def _processSystem(self, elem, sessionID):
         """Process a <system> AIML element.
 
         <system> elements process their contents recursively, and then
@@ -903,19 +932,19 @@ class Kernel:
         response = ""
         try:
             out = os.popen(command)            
-        except RuntimeError, msg:
+        except RuntimeError as msg:
             if self._verboseMode:
-                err = "WARNING: RuntimeError while processing \"system\" element:\n%s\n" % msg.encode(self._textEncoding, 'replace')
+                err = "WARNING: RuntimeError while processing \"system\" element:\n%s\n" % str(msg)
                 sys.stderr.write(err)
             return "There was an error while computing my response.  Please inform my botmaster."
-        time.sleep(0.01) # I'm told this works around a potential IOError exception.
+        time.sleep(0.01)  # I'm told this works around a potential IOError exception.
         for line in out:
             response += line + "\n"
-        response = string.join(response.splitlines()).strip()
+        response = ' '.join(response.splitlines()).strip()
         return response
 
     # <template>
-    def _processTemplate(self,elem, sessionID):
+    def _processTemplate(self, elem, sessionID):
         """Process a <template> AIML element.
 
         <template> elements recursively process their contents, and
@@ -929,7 +958,9 @@ class Kernel:
         return response
 
     # text
-    def _processText(self,elem, sessionID):
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def _processText(elem, sessionID):
         """Process a raw text element.
 
         Raw text elements aren't really AIML tags. Text elements cannot contain
@@ -939,8 +970,10 @@ class Kernel:
         in the text should be preserved or not.
         
         """
-        try: elem[2] + ""
-        except TypeError: raise TypeError, "Text element contents are not text"
+        try:
+            elem[2] + ""
+        except TypeError:
+            raise TypeError("Text element contents are not text")
 
         # If the the whitespace behavior for this element is "default",
         # we reduce all stretches of >1 whitespace characters to a single
@@ -952,7 +985,7 @@ class Kernel:
         return elem[2]
 
     # <that>
-    def _processThat(self,elem, sessionID):
+    def _processThat(self, elem, sessionID):
         """Process a <that> AIML element.
 
         Optional element attributes:
@@ -961,7 +994,7 @@ class Kernel:
             recent, and so on.
 
         <that> elements (when they appear inside <template> elements)
-        are the output equivilant of <input> elements; they return one
+        are the output equivalent of <input> elements; they return one
         of the Kernel's previous responses.
 
         """
@@ -973,9 +1006,10 @@ class Kernel:
             # far back in the output history to go.  y refers to which
             # sentence of the specified response to return.
             index = int(elem[1]['index'].split(',')[0])
-        except:
+        except Exception:
             pass
-        try: return outputHistory[-index]
+        try:
+            return outputHistory[-index]
         except IndexError:
             if self._verboseMode:
                 err = "No such index %d while processing <that> element.\n" % index
@@ -996,21 +1030,25 @@ class Kernel:
         "*" in the current category's <that> pattern.
 
         """
-        try: index = int(elem[1]['index'])
-        except KeyError: index = 1
+        try:
+            index = int(elem[1]['index'])
+        except KeyError:
+            index = 1
         # fetch the user's last input
         inputStack = self.getPredicate(self._inputStack, sessionID)
-        input = self._subbers['normal'].sub(inputStack[-1])
+        text_input = self._subbers['normal'].sub(inputStack[-1])
         # fetch the Kernel's last response (for 'that' context)
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
-        try: that = self._subbers['normal'].sub(outputHistory[-1])
-        except: that = "" # there might not be any output yet
+        try:
+            that = self._subbers['normal'].sub(outputHistory[-1])
+        except Exception:
+            that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
-        response = self._brain.star("thatstar", input, that, topic, index)
+        response = self._brain.star("thatstar", text_input, that, topic, index)
         return response
 
     # <think>
-    def _processThink(self,elem, sessionID):
+    def _processThink(self, elem, sessionID):
         """Process a <think> AIML element.
 
         <think> elements process their contents recursively, and then
@@ -1037,21 +1075,25 @@ class Kernel:
         by a "*" in the current category's <topic> pattern.
 
         """
-        try: index = int(elem[1]['index'])
-        except KeyError: index = 1
+        try:
+            index = int(elem[1]['index'])
+        except KeyError:
+            index = 1
         # fetch the user's last input
         inputStack = self.getPredicate(self._inputStack, sessionID)
-        input = self._subbers['normal'].sub(inputStack[-1])
+        text_input = self._subbers['normal'].sub(inputStack[-1])
         # fetch the Kernel's last response (for 'that' context)
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
-        try: that = self._subbers['normal'].sub(outputHistory[-1])
-        except: that = "" # there might not be any output yet
+        try:
+            that = self._subbers['normal'].sub(outputHistory[-1])
+        except Exception:
+            that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
-        response = self._brain.star("topicstar", input, that, topic, index)
+        response = self._brain.star("topicstar", text_input, that, topic, index)
         return response
 
     # <uppercase>
-    def _processUppercase(self,elem, sessionID):
+    def _processUppercase(self, elem, sessionID):
         """Process an <uppercase> AIML element.
 
         <uppercase> elements process their contents recursively, and
@@ -1062,10 +1104,11 @@ class Kernel:
         response = ""
         for e in elem[2:]:
             response += self._processElement(e, sessionID)
-        return string.upper(response)
+        return response.upper()
 
     # <version>
-    def _processVersion(self,elem, sessionID):
+    # noinspection PyUnusedLocal
+    def _processVersion(self, elem, sessionID):
         """Process a <version> AIML element.
 
         <version> elements return the version number of the AIML
@@ -1075,24 +1118,24 @@ class Kernel:
         return self.version()
 
 
-##################################################
-### Self-test functions follow                 ###
-##################################################
-def _testTag(kern, tag, input, outputList):
+##############################################
+# Self-test functions follow                 #
+##############################################
+def _testTag(kern, tag, text, outputList):
     """Tests 'tag' by feeding the Kernel 'input'.  If the result
     matches any of the strings in 'outputList', the test passes.
     
     """
     global _numTests, _numPassed
     _numTests += 1
-    print "Testing <" + tag + ">:",
-    response = kern.respond(input).decode(kern._textEncoding)
+    print("Testing <" + tag + ">:",)
+    response = kern.respond(text)
     if response in outputList:
-        print "PASSED"
+        print("PASSED")
         _numPassed += 1
         return True
     else:
-        print "FAILED (response: '%s')" % response.encode(kern._textEncoding, 'replace')
+        print("FAILED (response: '%s')" % response)
         return False
 
 if __name__ == "__main__":
@@ -1100,7 +1143,6 @@ if __name__ == "__main__":
     k = Kernel()
     k.bootstrap(learnFiles="self-test.aiml")
 
-    global _numTests, _numPassed
     _numTests = 0
     _numPassed = 0
 
@@ -1127,7 +1169,7 @@ if __name__ == "__main__":
     there's nothing to worry about.
     """
     if not _testTag(k, 'date', 'test date', ["The date is %s" % time.asctime()]):
-        print date_warning
+        print(date_warning)
     
     _testTag(k, 'formal', 'test formal', ["Formal Test Passed"])
     _testTag(k, 'gender', 'test gender', ["He'd told her he heard that her hernia is history"])
@@ -1164,20 +1206,21 @@ if __name__ == "__main__":
     k.setPredicate("topic", "fruit")
     _testTag(k, 'topic', "test topic", ["We were discussing apples and oranges"]) 
     k.setPredicate("topic", "Soylent Green")
-    _testTag(k, 'topicstar test #1', 'test topicstar', ["Solyent Green is made of people!"])
+    _testTag(k, 'topicstar test #1', 'test topicstar', ["Soylent Green is made of people!"])
     k.setPredicate("topic", "Soylent Ham and Cheese")
     _testTag(k, 'topicstar test #2', 'test topicstar multiple', ["Both Soylents Ham and Cheese are made of people!"])
     _testTag(k, 'unicode support', u"ÔÇÉÏºÃ", [u"Hey, you speak Chinese! ÔÇÉÏºÃ"])
     _testTag(k, 'uppercase', 'test uppercase', ["The Last Word Should Be UPPERCASE"])
     _testTag(k, 'version', 'test version', ["PyAIML is version %s" % k.version()])
-    _testTag(k, 'whitespace preservation', 'test whitespace', ["Extra   Spaces\n   Rule!   (but not in here!)    But   Here   They   Do!"])
+    _testTag(k, 'whitespace preservation', 'test whitespace',
+             ["Extra   Spaces\n   Rule!   (but not in here!)    But   Here   They   Do!"])
 
     # Report test results
-    print "--------------------"
+    print("--------------------")
     if _numTests == _numPassed:
-        print "%d of %d tests passed!" % (_numPassed, _numTests)
+        print("%d of %d tests passed!" % (_numPassed, _numTests))
     else:
-        print "%d of %d tests passed (see above for detailed errors)" % (_numPassed, _numTests)
+        print("%d of %d tests passed (see above for detailed errors)" % (_numPassed, _numTests))
 
     # Run an interactive interpreter
     #print "\nEntering interactive mode (ctrl-c to exit)"

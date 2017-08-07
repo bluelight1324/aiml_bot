@@ -26,7 +26,7 @@ to a Windows-style INI file with the following format:
     he = I
     # and so on...
 
-    # the 'normal' section contains subtitutions run on every input
+    # the 'normal' section contains substitutions run on every input
     # string passed into Kernel.respond().  It's mainly used to
     # correct common misspellings, and to convert contractions
     # ("WHAT'S") into a format that will match an AIML pattern ("WHAT
@@ -58,16 +58,16 @@ defaultPerson = {
     "myself": "himself",
 
     # 3rd->1st (masculine)
-    "he":"I",
-    "him":"me",
-    "his":"my",
-    "himself":"myself",
+    "he": "I",
+    "him": "me",
+    "his": "my",
+    "himself": "myself",
     
     # 3rd->1st (feminine)
-    "she":"I",
-    "her":"me",
-    "hers":"mine",
-    "herself":"myself",
+    "she": "I",
+    "her": "me",
+    "hers": "mine",
+    "herself": "myself",
 }
 
 defaultPerson2 = {
