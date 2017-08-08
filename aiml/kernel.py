@@ -38,7 +38,7 @@ class Kernel:
 
         # set up the sessions        
         self._sessions = {}
-        self._addSession(self._globalSessionID)
+        self.addSession(self._globalSessionID)
 
         # Set up the bot predicates
         self._botPredicates = {}
@@ -192,7 +192,7 @@ class Kernel:
         created.
 
         """
-        self._addSession(sessionID)  # add the session, if it doesn't already exist.
+        self.addSession(sessionID)  # add the session, if it doesn't already exist.
         self._sessions[sessionID][name] = value
 
     def getBotPredicate(self, name):
@@ -245,7 +245,7 @@ class Kernel:
             for key, v in parser.items(s):
                 self._subbers[s][key] = v
 
-    def _addSession(self, sessionID):
+    def addSession(self, sessionID):
         """Create a new session with the specified ID string."""
         if sessionID in self._sessions:
             return
@@ -257,7 +257,7 @@ class Kernel:
             self._inputStack: []
         }
         
-    def _deleteSession(self, sessionID):
+    def deleteSession(self, sessionID):
         """Delete the specified session."""
         if sessionID in self._sessions:
             self._sessions.pop(sessionID)
@@ -277,6 +277,12 @@ class Kernel:
         else:
             s = {}
         return copy.deepcopy(s)
+
+    def setSessionData(self, data, sessionID=None):
+        if sessionID is None:
+            self._sessions = data
+        else:
+            self._sessions[sessionID] = data
 
     def learn(self, filename):
         """Load and learn the contents of the specified AIML file.
@@ -323,7 +329,7 @@ class Kernel:
         self._respondLock.acquire()
 
         # Add the session, if it doesn't already exist
-        self._addSession(sessionID)
+        self.addSession(sessionID)
 
         # split the input into discrete sentences
         sentences = utilities.sentences(text)
