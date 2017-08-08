@@ -247,16 +247,16 @@ class Kernel:
 
     def addSession(self, sessionID):
         """Create a new session with the specified ID string."""
-        if sessionID in self._sessions:
-            return
         # Create the session.
-        self._sessions[sessionID] = {
-            # Initialize the special reserved predicates
-            self._inputHistory: [],
-            self._outputHistory: [],
-            self._inputStack: []
-        }
-        
+        if sessionID in self._sessions:
+            session_data = self._sessions[sessionID]
+        else:
+            session_data = self._sessions[sessionID] = {}
+        # Initialize the special reserved predicates
+        for key in self._inputHistory, self._outputHistory, self._inputStack:
+            if key not in session_data:
+                session_data[key] = []
+
     def deleteSession(self, sessionID):
         """Delete the specified session."""
         if sessionID in self._sessions:
@@ -272,10 +272,9 @@ class Kernel:
         """
         if sessionID is None:
             s = self._sessions
-        elif sessionID in self._sessions:
-            s = self._sessions[sessionID]
         else:
-            s = {}
+            self.addSession(sessionID)
+            s = self._sessions[sessionID]
         return copy.deepcopy(s)
 
     def setSessionData(self, data, sessionID=None):
@@ -317,7 +316,7 @@ class Kernel:
         if len(text) == 0:
             return ""
 
-        #ensure that input is a unicode string
+        # ensure that input is a unicode string
         try:
             text = text
         except UnicodeError:
