@@ -65,7 +65,7 @@ def main():
     if brain_path is None:
         brain_path = os.path.expanduser('~/.aiml/default.brn')
 
-    if not os.path.isdir(brain_path):
+    if not os.path.isfile(brain_path):
         reset = True
 
     brain_loaded = False
@@ -89,13 +89,10 @@ def main():
         # optional learnFiles argument is a file (or list of files) to load.
         # The optional commands argument is a command (or list of commands)
         # to run after the files are loaded.
-        startup_path = os.path.join(os.path.dirname(__file__), "bootstrap.aiml")
-        if not os.path.isfile(startup_path):
-            raise FileNotFoundError(startup_path)
         if no_std:
-            kern.bootstrap(learnFiles=startup_path)
+            kern.bootstrap(commands=())
         else:
-            kern.bootstrap(learnFiles=startup_path, commands="load std aiml")
+            kern.bootstrap(commands="load std aiml")
         brain_loaded = True
         # Now that we've loaded the brain, save it to speed things up for
         # next time.

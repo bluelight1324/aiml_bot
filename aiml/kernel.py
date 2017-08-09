@@ -102,7 +102,7 @@ class Kernel:
             "version":      self._processVersion,
         }
 
-    def bootstrap(self, brainFile=None, learnFiles=(), commands=()):
+    def bootstrap(self, brainFile=None, learnFiles=None, commands=None):
         """Prepare a Kernel object for use.
 
         If a brainFile argument is provided, the Kernel attempts to
@@ -119,17 +119,27 @@ class Kernel:
         if brainFile:
             self.loadBrain(brainFile)
 
-        # learnFiles might be a string, in which case it should be
-        # turned into a single-element list.
-        if isinstance(learnFiles, str):
+        if learnFiles is None:
+            if brainFile is None:
+                learns = [os.path.join(os.path.dirname(__file__), 'bootstrap.aiml')]
+            else:
+                learns = []
+        elif isinstance(learnFiles, str):
+            # learnFiles might be a string, in which case it should be
+            # turned into a single-element list.
             learns = [learnFiles]
         else:
             learns = learnFiles
         for file in learns:
             self.learn(file)
-            
-        # ditto for commands
-        if isinstance(commands, str):
+
+        if commands is None:
+            if brainFile is None:
+                commands = ['load std aiml']
+            else:
+                commands = []
+        elif isinstance(commands, str):
+            # ditto for commands
             commands = [commands]
         for cmd in commands:
             print(self._respond(cmd, self._globalSessionID))
