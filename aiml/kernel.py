@@ -2,9 +2,9 @@
 """This file contains the public interface to the aiml module."""
 from . import utilities
 from .aiml_parser import create_parser
+from .default_substitutions import defaultGender, defaultPerson, defaultPerson2, defaultNormal
 from .pattern_manager import PatternMgr
 from .word_substitutions import WordSub
-from .default_substitutions import defaultGender, defaultPerson, defaultPerson2, defaultNormal\
 
 from configparser import ConfigParser
 import copy
@@ -14,9 +14,20 @@ import random
 import re
 import string
 import sys
-import time
 import threading
+import time
 import xml.sax
+
+
+aiml_install_path = os.path.expanduser('~/.aiml')
+try:
+    import aiml_sets
+except ImportError:
+    aiml_sets = None
+else:
+    for set_name in aiml_sets.list_aiml_sets():
+        if not aiml_sets.is_installed(set_name, destination_path=aiml_install_path):
+            aiml_sets.install(set_name, destination_path=aiml_install_path)
 
 
 class Kernel:
@@ -297,28 +308,36 @@ class Kernel:
 
         If filename includes wildcard characters, all matching files
         will be loaded and learned.
-
         """
-        for f in glob.glob(filename):
-            if self._verboseMode:
-                print("Loading %s..." % f,)
-            start = time.clock()
-            # Load and parse the AIML file.
-            parser = create_parser()
-            handler = parser.getContentHandler()
-            handler.setEncoding(self._textEncoding)
-            try:
-                parser.parse(f)
-            except xml.sax.SAXParseException as msg:
-                err = "\nFATAL PARSE ERROR in file %s:\n%s\n" % (f, msg)
-                sys.stderr.write(err)
-                continue
-            # store the pattern/template pairs in the PatternMgr.
-            for key, tem in handler.categories.items():
-                self._brain.add(*key, tem)
-            # Parsing was successful.
-            if self._verboseMode:
-                print("done (%.2f seconds)" % (time.clock() - start))
+
+        filenames = [filename]
+        if filename != os.path.join(aiml_install_path, filename):
+            filenames.append(os.path.join(aiml_install_path, filename))
+        filenames += [filename.lower() for filename in filenames]
+
+        for filename in filenames:
+            for f in glob.glob(filename):
+                if not os.path.isfile(f):
+                    continue  # Skip folders.
+                if self._verboseMode:
+                    print("Loading %s..." % f,)
+                start = time.clock()
+                # Load and parse the AIML file.
+                parser = create_parser()
+                handler = parser.getContentHandler()
+                handler.setEncoding(self._textEncoding)
+                try:
+                    parser.parse(f)
+                except xml.sax.SAXParseException as msg:
+                    err = "\nFATAL PARSE ERROR in file %s:\n%s\n" % (f, msg)
+                    sys.stderr.write(err)
+                    continue
+                # store the pattern/template pairs in the PatternMgr.
+                for key, tem in handler.categories.items():
+                    self._brain.add(*key, tem)
+                # Parsing was successful.
+                if self._verboseMode:
+                    print("done (%.2f seconds)" % (time.clock() - start))
 
     def respond(self, text, sessionID=_globalSessionID):
         """Return the Kernel's response to the input string."""
@@ -704,7 +723,6 @@ class Kernel:
 
         <learn> elements process their contents recursively, and then
         treat the result as an AIML file to open and learn.
-
         """
         filename = ""
         for e in elem[2:]:

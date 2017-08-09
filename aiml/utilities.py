@@ -33,6 +33,7 @@ def sentences(s):
         sentenceList.append(s)
     return sentenceList
 
+
 # Self test
 if __name__ == "__main__":
     # sentences
