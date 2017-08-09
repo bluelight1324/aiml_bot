@@ -1,3 +1,7 @@
+"""
+An AIML parser based on the xml.sax parsing framework.
+"""
+
 from xml.sax.handler import ContentHandler
 from xml.sax.xmlreader import Locator
 import sys
@@ -6,10 +10,12 @@ import xml.sax.handler
 
 
 class AimlParserError(Exception):
-    pass
+    """AIML syntax error."""
 
 
 class AimlHandler(ContentHandler):
+    """Content handler for xml.sax-based AIML parser."""
+
     # The legal states of the AIML parser
     _STATE_OutsideAiml = 0
     _STATE_InsideAiml = 1
@@ -101,8 +107,9 @@ class AimlHandler(ContentHandler):
             self._whitespaceBehaviorStack.append(self._whitespaceBehaviorStack[-1])
 
     def startElementNS(self, name, qname, attr):
-        print("QNAME:", qname)
-        print("NAME:", name)
+        """Handle the start of a namespace."""
+        # print("QNAME:", qname)
+        # print("NAME:", name)
         uri, elem = name
         if elem == "bot":
             print("name:", attr.getValueByQName("name"), "a'ite?")
@@ -110,6 +117,7 @@ class AimlHandler(ContentHandler):
         pass
 
     def startElement(self, name, attr):
+        """Handle the start of an element."""
         # Wrapper around _startElement, which catches errors in _startElement()
         # and keeps going.
 
@@ -141,7 +149,7 @@ class AimlHandler(ContentHandler):
                 raise AimlParserError("Unexpected <aiml> tag " + self._location())
             self._state = self._STATE_InsideAiml
             self._insideTopic = False
-            self._currentTopic = u""
+            self._currentTopic = ""
             try:
                 self._version = attr["version"]
             except KeyError:
@@ -179,11 +187,11 @@ class AimlHandler(ContentHandler):
             if self._state != self._STATE_InsideAiml:
                 raise AimlParserError("Unexpected <category> tag "+self._location())
             self._state = self._STATE_InsideCategory
-            self._currentPattern = u""
-            self._currentThat = u""
+            self._currentPattern = ""
+            self._currentThat = ""
             # If we're not inside a topic, the topic is implicitly set to *
             if not self._insideTopic:
-                self._currentTopic = u"*"
+                self._currentTopic = "*"
             self._elemStack = []
             self._pushWhitespaceBehavior(attr)
         elif name == "pattern":
@@ -203,7 +211,7 @@ class AimlHandler(ContentHandler):
                 raise AimlParserError("Unexpected <template> tag "+self._location())
             # if no <that> element was specified, it is implicitly set to *
             if self._state == self._STATE_AfterPattern:
-                self._currentThat = u"*"
+                self._currentThat = "*"
             self._state = self._STATE_InsideTemplate
             self._elemStack.append(['template', {}])
             self._pushWhitespaceBehavior(attr)
@@ -212,7 +220,7 @@ class AimlHandler(ContentHandler):
             if name == "bot" and 'name' in attr and attr["name"] == "name":
                 # Insert a special character string that the PatternMgr will
                 # replace with the bot's name.
-                self._currentPattern += u" BOT_NAME "
+                self._currentPattern += " BOT_NAME "
             else:
                 raise AimlParserError(("Unexpected <%s> tag " % name)+self._location())
         elif self._state == self._STATE_InsideThat:
@@ -220,7 +228,7 @@ class AimlHandler(ContentHandler):
             if name == "bot" and 'name' in attr and attr["name"] == "name":
                 # Insert a special character string that the PatternMgr will
                 # replace with the bot's name.
-                self._currentThat += u" BOT_NAME "
+                self._currentThat += " BOT_NAME "
             else:
                 raise AimlParserError(("Unexpected <%s> tag " % name)+self._location())
         elif self._state == self._STATE_InsideTemplate and name in self._validInfo:
@@ -250,6 +258,7 @@ class AimlHandler(ContentHandler):
                 raise AimlParserError(("Unexpected <%s> tag " % name)+self._location())
 
     def characters(self, ch):
+        """Handle a sequence of characters between tags."""
         # Wrapper around _characters which catches errors in _characters()
         # and keeps going.
         if self._state == self._STATE_OutsideAiml:
@@ -321,14 +330,15 @@ class AimlHandler(ContentHandler):
             pass
 
     def endElementNS(self, name, qname):
+        """Handle the end of a namespace."""
         uri, elem = name
         self.endElement(elem)
 
     def endElement(self, name):
-        """Wrapper around _endElement which catches errors in _characters()
-        and keeps going.
+        """Handle the end of an element."""
 
-        """
+        # Wrapper around _endElement which catches errors in _characters() and keeps going.
+
         if self._state == self._STATE_OutsideAiml:
             # If we're outside of an AIML element, ignore all tags
             return
@@ -375,7 +385,7 @@ class AimlHandler(ContentHandler):
             if self._state != self._STATE_InsideAiml or not self._insideTopic:
                 raise AimlParserError("Unexpected </topic> tag "+self._location())
             self._insideTopic = False
-            self._currentTopic = u""
+            self._currentTopic = ""
         elif name == "category":
             # </category> tags are only legal in the AfterTemplate state
             if self._state != self._STATE_AfterTemplate:
@@ -463,6 +473,7 @@ class AimlHandler(ContentHandler):
         "version":      ([], [], False),
     }
 
+    # noinspection PyUnusedLocal
     def _validateElemStart(self, name, attr, version):
         """Test the validity of an element starting inside a <template>
         element.

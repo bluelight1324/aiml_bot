@@ -20,6 +20,10 @@ import xml.sax
 
 
 class Kernel:
+    """
+    The AIML response engine.
+    """
+
     # module constants
     _globalSessionID = "_global"  # key of the global session (duh)
     _maxHistorySize = 10  # maximum length of the _inputs and _responses lists
@@ -278,6 +282,11 @@ class Kernel:
         return copy.deepcopy(s)
 
     def setSessionData(self, data, sessionID=None):
+        """
+        Set the session data dictionary for the specified session.
+        If no session is specified, the data dictionary replaces
+        *all* of the individual session dictionaries.
+        """
         if sessionID is None:
             self._sessions = data
         else:
@@ -665,7 +674,7 @@ class Kernel:
         inputHistory = self.getPredicate(self._inputHistory, sessionID)
         try:
             index = int(elem[1]['index'])
-        except Exception:
+        except (IndexError, KeyError, ValueError):
             index = 1
         try:
             return inputHistory[-index]
@@ -899,7 +908,7 @@ class Kernel:
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
         try:
             that = self._subbers['normal'].sub(outputHistory[-1])
-        except Exception:
+        except (KeyError, IndexError):
             that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
         response = self._brain.star("star", text_input, that, topic, index)
@@ -1011,7 +1020,7 @@ class Kernel:
             # far back in the output history to go.  y refers to which
             # sentence of the specified response to return.
             index = int(elem[1]['index'].split(',')[0])
-        except Exception:
+        except (KeyError, IndexError, ValueError, TypeError):
             pass
         try:
             return outputHistory[-index]
@@ -1046,7 +1055,7 @@ class Kernel:
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
         try:
             that = self._subbers['normal'].sub(outputHistory[-1])
-        except Exception:
+        except (KeyError, IndexError):
             that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
         response = self._brain.star("thatstar", text_input, that, topic, index)
@@ -1091,7 +1100,7 @@ class Kernel:
         outputHistory = self.getPredicate(self._outputHistory, sessionID)
         try:
             that = self._subbers['normal'].sub(outputHistory[-1])
-        except Exception:
+        except (KeyError, IndexError):
             that = ""  # there might not be any output yet
         topic = self.getPredicate("topic", sessionID)
         response = self._brain.star("topicstar", text_input, that, topic, index)
@@ -1214,7 +1223,7 @@ if __name__ == "__main__":
     _testTag(k, 'topicstar test #1', 'test topicstar', ["Soylent Green is made of people!"])
     k.setPredicate("topic", "Soylent Ham and Cheese")
     _testTag(k, 'topicstar test #2', 'test topicstar multiple', ["Both Soylents Ham and Cheese are made of people!"])
-    _testTag(k, 'unicode support', u"郧上好", [u"Hey, you speak Chinese! 郧上好"])
+    _testTag(k, 'unicode support', "郧上好", ["Hey, you speak Chinese! 郧上好"])
     _testTag(k, 'uppercase', 'test uppercase', ["The Last Word Should Be UPPERCASE"])
     _testTag(k, 'version', 'test version', ["PyAIML is version %s" % k.version()])
     _testTag(k, 'whitespace preservation', 'test whitespace',

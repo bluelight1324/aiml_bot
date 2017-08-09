@@ -1,6 +1,8 @@
-# This class implements the AIML pattern-matching algorithm described
-# by Dr. Richard Wallace at the following site:
-# http://www.alicebot.org/documentation/matching.html
+"""
+An implementation of the AIML pattern-matching algorithm described
+by Dr. Richard Wallace at the following site:
+http://www.alicebot.org/documentation/matching.html
+"""
 
 import marshal
 import pprint
@@ -8,6 +10,12 @@ import re
 
 
 class PatternMgr:
+    """
+    This class implements the AIML pattern-matching algorithm described
+    by Dr. Richard Wallace at the following site:
+    http://www.alicebot.org/documentation/matching.html
+    """
+
     # special dictionary keys
     _UNDERSCORE = 0
     _STAR = 1
@@ -19,7 +27,7 @@ class PatternMgr:
     def __init__(self):
         self._root = {}
         self._templateCount = 0
-        self._botName = u"Nameless"
+        self._botName = "Nameless"
         punctuation = "\"`~!@#$%^&*()-_=+[{]}\|;:',<.>/?"
         self._puncStripRE = re.compile("[" + re.escape(punctuation) + "]")
         self._whitespaceRE = re.compile("\s+")
@@ -81,11 +89,11 @@ class PatternMgr:
         node = self._root
         for word in pattern.split():
             key = word
-            if key == u"_":
+            if key == "_":
                 key = self._UNDERSCORE
-            elif key == u"*":
+            elif key == "*":
                 key = self._STAR
-            elif key == u"BOT_NAME":
+            elif key == "BOT_NAME":
                 key = self._BOT_NAME
             if key not in node:
                 node[key] = {}
@@ -98,9 +106,9 @@ class PatternMgr:
             node = node[self._THAT]
             for word in that.split():
                 key = word
-                if key == u"_":
+                if key == "_":
                     key = self._UNDERSCORE
-                elif key == u"*":
+                elif key == "*":
                     key = self._STAR
                 if key not in node:
                     node[key] = {}
@@ -113,9 +121,9 @@ class PatternMgr:
             node = node[self._TOPIC]
             for word in topic.split():
                 key = word
-                if key == u"_":
+                if key == "_":
                     key = self._UNDERSCORE
-                elif key == u"*":
+                elif key == "*":
                     key = self._STAR
                 if key not in node:
                     node[key] = {}
@@ -139,13 +147,13 @@ class PatternMgr:
         # Mutilate the input.  Remove all punctuation and convert the text to all caps.
         text_input = pattern.upper()
         text_input = re.sub(self._puncStripRE, " ", text_input)
-        if that.strip() == u"":
-            that = u"ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
+        if that.strip() == "":
+            that = "ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
         thatInput = that.upper()
         thatInput = re.sub(self._puncStripRE, " ", thatInput)
         thatInput = re.sub(self._whitespaceRE, " ", thatInput)
-        if topic.strip() == u"":
-            topic = u"ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
+        if topic.strip() == "":
+            topic = "ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
         topicInput = topic.upper()
         topicInput = re.sub(self._puncStripRE, " ", topicInput)
 
@@ -168,13 +176,13 @@ class PatternMgr:
         text_input = pattern.upper()
         text_input = re.sub(self._puncStripRE, " ", text_input)
         text_input = re.sub(self._whitespaceRE, " ", text_input)
-        if that.strip() == u"":
-            that = u"ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
+        if that.strip() == "":
+            that = "ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
         thatInput = that.upper()
         thatInput = re.sub(self._puncStripRE, " ", thatInput)
         thatInput = re.sub(self._whitespaceRE, " ", thatInput)
-        if topic.strip() == u"":
-            topic = u"ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
+        if topic.strip() == "":
+            topic = "ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
         topicInput = topic.upper()
         topicInput = re.sub(self._puncStripRE, " ", topicInput)
         topicInput = re.sub(self._whitespaceRE, " ", topicInput)
@@ -231,7 +239,7 @@ class PatternMgr:
                         # pattern again, the star has ended.
                         if patMatch[j+1] == words[k]:
                             end = k - 1
-                            i = k
+                            # i = k
                             break
                 # If we just finished processing the star we cared
                 # about, we exit the loop early.
