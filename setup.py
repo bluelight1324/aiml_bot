@@ -15,11 +15,11 @@ setup(
     version="0.8.6",
     author="Cort Stratton",
     author_email="cort@cortstratton.org",
-    maintainer="Cort Stratton",
-    maintainer_email="cort@cortstratton.org",
+    maintainer="Aaron Hosford",
+    maintainer_email="hosford42@gmail.com",
     description="An interpreter package for AIML, the Artificial Intelligence Markup Language",
     long_description=__doc__,
-    url="https://github.com/cdwfs/pyaiml",
+    url="https://github.com/hosford42/pyaiml",
     platforms=["any"],
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -33,7 +33,7 @@ setup(
 
     packages=["aiml"],
     data_files=[
-        (package_prefix, glob.glob("aiml/self-test.aiml")),
+        (package_prefix, glob.glob("aiml/*.aiml")),
         (package_prefix, glob.glob("*.txt")),
     ],
 )

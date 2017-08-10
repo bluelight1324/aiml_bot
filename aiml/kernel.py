@@ -2,13 +2,6 @@
 
 """This file contains the public interface to the aiml module."""
 
-from .aiml_parser import create_parser
-from .default_substitutions import default_gender, default_person, default_person2, default_normal
-from .pattern_manager import PatternManager
-from .utilities import split_sentences
-from .word_substitutions import WordSub
-
-from configparser import ConfigParser
 import copy
 import glob
 import os
@@ -19,7 +12,13 @@ import sys
 import threading
 import time
 import xml.sax
+from configparser import ConfigParser
 
+from .aiml_parser import create_parser
+from .default_substitutions import default_gender, default_person, default_person2, default_normal
+from .pattern_manager import PatternManager
+from .utilities import split_sentences
+from .word_substitutions import WordSub
 
 AIML_INSTALL_PATH = os.path.expanduser('~/.aiml')
 try:
@@ -1113,115 +1112,3 @@ class Kernel:
         interpreter.
         """
         return self.version
-
-
-##############################################
-# Self-test functions follow                 #
-##############################################
-
-
-def test_kernel():
-    """Run some self-tests on the Kernel."""
-    k = Kernel()
-    base_path = os.path.dirname(__file__)
-    k.bootstrap(learn=[os.path.join(base_path, "bootstrap.aiml"), os.path.join(base_path, "self-test.aiml")])
-
-    _num_tests = 0
-    _num_passed = 0
-
-    def _testTag(kern: Kernel, tag: str, text: str, output_list: list):
-        """Tests 'tag' by feeding the Kernel 'input'.  If the result
-        matches any of the strings in 'outputList', the test passes.
-        """
-        # noinspection PyGlobalUndefined
-        nonlocal _num_tests, _num_passed
-        _num_tests += 1
-        print("Testing <" + tag + ">:", )
-        response = kern.respond(text)
-        if response in output_list:
-            print("PASSED")
-            _num_passed += 1
-            return True
-        else:
-            print("FAILED (response: '%s')" % response)
-            return False
-
-    _testTag(k, 'bot', 'test bot', ["My name is Nameless"])
-
-    k.set_predicate('gender', 'male')
-    _testTag(k, 'condition test #1', 'test condition name value', ['You are handsome'])
-    k.set_predicate('gender', 'female')
-    _testTag(k, 'condition test #2', 'test condition name value', [''])
-    _testTag(k, 'condition test #3', 'test condition name', ['You are beautiful'])
-    k.set_predicate('gender', 'robot')
-    _testTag(k, 'condition test #4', 'test condition name', ['You are genderless'])
-    _testTag(k, 'condition test #5', 'test condition', ['You are genderless'])
-    k.set_predicate('gender', 'male')
-    _testTag(k, 'condition test #6', 'test condition', ['You are handsome'])
-
-    # the date test will occasionally fail if the original and "test"
-    # times cross a second boundary.  There's no good way to avoid
-    # this problem and still do a meaningful test, so we simply
-    # provide a friendly message to be printed if the test fails.
-    date_warning = """
-    NOTE: the <date> test will occasionally report failure even if it
-    succeeds.  So long as the response looks like a date/time string,
-    there's nothing to worry about.
-    """
-    if not _testTag(k, 'date', 'test date', ["The date is %s" % time.asctime()]):
-        print(date_warning)
-    
-    _testTag(k, 'formal', 'test formal', ["Formal Test Passed"])
-    _testTag(k, 'gender', 'test gender', ["He'd told her he heard that her hernia is history"])
-    _testTag(k, 'get/set', 'test get and set', ["I like cheese. My favorite food is cheese"])
-    _testTag(k, 'gossip', 'test gossip', ["Gossip is not yet implemented"])
-    _testTag(k, 'id', 'test id', ["Your id is anonymous"])
-    _testTag(k, 'input', 'test input', ['You just said: test input'])
-    _testTag(k, 'javascript', 'test javascript', ["Javascript is not yet implemented"])
-    _testTag(k, 'lowercase', 'test lowercase', ["The Last Word Should Be lowercase"])
-    _testTag(k, 'person', 'test person', ['HE think i knows that my actions threaten him and his.'])
-    _testTag(k, 'person2', 'test person2', ['YOU think me know that my actions threaten you and yours.'])
-    _testTag(k, 'person2 (no contents)', 'test person2 I Love Lucy', ['YOU Love Lucy'])
-    _testTag(k, 'random', 'test random', ["response #1", "response #2", "response #3"])
-    _testTag(k, 'random empty', 'test random empty', ["Nothing here!"])
-    _testTag(k, 'sentence', "test sentence", ["My first letter should be capitalized."])
-    _testTag(k, 'size', "test size", ["I've learned %d categories" % k.category_count])
-    _testTag(k, 'sr', "test sr test srai", ["srai results: srai test passed"])
-    _testTag(k, 'sr nested', "test nested sr test srai", ["srai results: srai test passed"])
-    _testTag(k, 'srai', "test srai", ["srai test passed"])
-    _testTag(k, 'srai infinite', "test srai infinite", [""])
-    _testTag(k, 'star test #1', 'intro scroll test star begin', ['Begin star matched: intro scroll'])
-    _testTag(k, 'star test #2', 'test star creamy goodness middle', ['Middle star matched: creamy goodness'])
-    _testTag(k, 'star test #3', 'test star end the credits roll', ['End star matched: the credits roll'])
-    _testTag(k, 'star test #4', 'test star having multiple stars in a pattern makes me extremely happy',
-             ['Multiple stars matched: having, stars in a pattern, extremely happy'])
-    _testTag(k, 'system', "test system", ["The system says hello!"])
-    _testTag(k, 'that test #1', "test that", ["I just said: The system says hello!"])
-    _testTag(k, 'that test #2', "test that", ["I have already answered this question"])
-    _testTag(k, 'thatstar test #1', "test thatstar", ["I say beans"])
-    _testTag(k, 'thatstar test #2', "test thatstar", ["I just said \"beans\""])
-    _testTag(k, 'thatstar test #3', "test thatstar multiple", ['I say beans and franks for everybody'])
-    _testTag(k, 'thatstar test #4', "test thatstar multiple", ['Yes, beans and franks for all!'])
-    _testTag(k, 'think', "test think", [""])
-    k.set_predicate("topic", "fruit")
-    _testTag(k, 'topic', "test topic", ["We were discussing apples and oranges"]) 
-    k.set_predicate("topic", "Soylent Green")
-    _testTag(k, 'topicstar test #1', 'test topicstar', ["Soylent Green is made of people!"])
-    k.set_predicate("topic", "Soylent Ham and Cheese")
-    _testTag(k, 'topicstar test #2', 'test topicstar multiple', ["Both Soylents Ham and Cheese are made of people!"])
-    _testTag(k, 'unicode support', "郧上好", ["Hey, you speak Chinese! 郧上好"])
-    _testTag(k, 'uppercase', 'test uppercase', ["The Last Word Should Be UPPERCASE"])
-    _testTag(k, 'version', 'test version', ["PyAIML is version %s" % k.version])
-    _testTag(k, 'whitespace preservation', 'test whitespace',
-             ["Extra   Spaces\n   Rule!   (but not in here!)    But   Here   They   Do!"])
-
-    # Report test results
-    print("--------------------")
-    if _num_tests == _num_passed:
-        print("%d of %d tests passed!" % (_num_passed, _num_tests))
-    else:
-        print("%d of %d tests passed (see above for detailed errors)" % (_num_passed, _num_tests))
-
-    # Run an interactive interpreter
-    # print "\nEntering interactive mode (ctrl-c to exit)"
-    # while True: print k.respond(raw_input("> "))
