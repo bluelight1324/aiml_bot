@@ -1,2 +1,4 @@
 include *.txt
+include *.md
 include aiml_bot/*.aiml
+include .gitignore

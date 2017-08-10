@@ -32,8 +32,11 @@ setup(
     ],
 
     packages=["aiml_bot"],
+    package_data={
+        "aiml_bot": ["*.aiml"],
+    },
     data_files=[
-        (package_prefix, glob.glob("aiml_bot/*.aiml")),
-        (package_prefix, glob.glob("*.txt")),
-    ],
+        ("doc/aiml_bot", glob.glob("*.txt")),
+        ("doc/aiml_bot", glob.glob("*.md")),
+    ]
 )
