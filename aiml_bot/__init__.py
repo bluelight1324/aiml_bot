@@ -3,11 +3,11 @@ import sys
 import traceback
 
 
-# The Kernel class is the only class most implementations should need.
-from .kernel import Kernel
+# The Bot class is the only class most implementations should need.
+from .bot import Bot
 
 __all__ = [
-    'Kernel',
+    'Bot',
     'main',
     'USAGE'
 ]
@@ -34,11 +34,8 @@ BRAIN_PATH
 def main():
     """
     This script demonstrates how to create a bare-bones, fully functional
-    chatbot using PyAIML.
+    chatbot using AIML Bot.
     """
-
-    # Create a Kernel object.
-    kern = Kernel()
 
     # When loading an AIML set, you have two options: load the original
     # AIML files, or load a precompiled "brain" that was created from a
@@ -68,7 +65,7 @@ def main():
     if not os.path.isfile(brain_path):
         reset = True
 
-    brain_loaded = False
+    robot = None
 
     if not reset:
         # Attempt to load the brain file.  If it fails, fall back on the
@@ -76,8 +73,7 @@ def main():
         # noinspection PyBroadException
         try:
             # The optional branFile argument specifies a brain file to load.
-            kern.bootstrap(brain_file=brain_path)
-            brain_loaded = True
+            robot = Bot(brain_file=brain_path)
         except Exception:
             print("Error loading saved brain file:")
             traceback.print_exc()
@@ -85,29 +81,28 @@ def main():
 
     if reset:
         print("Resetting.")
-        # Use the Kernel's bootstrap() method to initialize the Kernel. The
+        # Use the Bot's bootstrap() method to initialize the Bot. The
         # optional learnFiles argument is a file (or list of files) to load.
         # The optional commands argument is a command (or list of commands)
         # to run after the files are loaded.
         if no_std:
-            kern.bootstrap(commands=())
+            robot = Bot()
         else:
-            kern.bootstrap(commands="load std aiml")
-        brain_loaded = True
+            robot = Bot(commands="load std aiml")
         # Now that we've loaded the brain, save it to speed things up for
         # next time.
-        kern.save_brain(brain_path)
+        robot.save_brain(brain_path)
 
-    assert brain_loaded, "The brain file was not loaded."
+    assert robot is not None, "Bot initialization failed!"
 
     # Enter the main input/output loop.
     print("\nINTERACTIVE MODE (ctrl-c to exit)")
     while True:
         try:
-            print(kern.respond(input("> ")))
+            print(robot.respond(input("> ")))
         except KeyboardInterrupt:
             break
 
-    kern.save_brain(brain_path)
+    robot.save_brain(brain_path)
 
     return 0

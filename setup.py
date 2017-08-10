@@ -1,5 +1,5 @@
 """
-PyAIML implements an interpreter for AIML, the Artificial Intelligence
+AIML Bot implements an interpreter for AIML, the Artificial Intelligence
 Markup Language developed by Dr. Richard Wallace of the A.L.I.C.E. Foundation.
 It can be used to implement a conversational AI program.
 """
@@ -8,18 +8,18 @@ It can be used to implement a conversational AI program.
 from setuptools import setup
 import glob
 
-package_prefix = "Lib/site-packages/aiml"
+package_prefix = "Lib/site-packages/aiml_bot"
 
 setup(
-    name="PyAIML",
-    version="0.8.6",
+    name="AIML Bot",
+    version="0.0",
     author="Cort Stratton",
     author_email="cort@cortstratton.org",
     maintainer="Aaron Hosford",
     maintainer_email="hosford42@gmail.com",
     description="An interpreter package for AIML, the Artificial Intelligence Markup Language",
     long_description=__doc__,
-    url="https://github.com/hosford42/pyaiml",
+    url="https://github.com/hosford42/aiml_bot",
     platforms=["any"],
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -31,9 +31,9 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence"
     ],
 
-    packages=["aiml"],
+    packages=["aiml_bot"],
     data_files=[
-        (package_prefix, glob.glob("aiml/*.aiml")),
+        (package_prefix, glob.glob("aiml_bot/*.aiml")),
         (package_prefix, glob.glob("*.txt")),
     ],
 )

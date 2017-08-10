@@ -1,8 +1,8 @@
 """
-This file contains the default (English) substitutions for the
-PyAIML kernel.  These substitutions may be overridden by using the
-Kernel.loadSubs(filename) method.  The filename specified should refer
-to a Windows-style INI file with the following format:
+This file contains the default (English) substitutions for the AIML Bot. These
+substitutions may be overridden by using the Bot.load_substitutions(filename)
+method. The filename specified should refer to a Windows-style INI file with
+the following format:
 
     # lines that start with '#' are comments
 
@@ -28,7 +28,7 @@ to a Windows-style INI file with the following format:
     # and so on...
 
     # the 'normal' section contains substitutions run on every input
-    # string passed into Kernel.respond().  It's mainly used to
+    # string passed into Bot.respond().  It's mainly used to
     # correct common misspellings, and to convert contractions
     # ("WHAT'S") into a format that will match an AIML pattern ("WHAT
     # IS").

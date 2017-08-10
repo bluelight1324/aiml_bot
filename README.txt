@@ -1,41 +1,30 @@
-PyAIML -- The Python AIML Interpreter
-author: Cort Stratton
-web: https://github.com/cdwfs/pyaiml
+AIML Bot
+original author: Cort Stratton
+maintainer: Aaron Hosford
+web: https://github.com/hosford42/aiml_bot
 
-PyAIML is an interpreter for AIML (the Artificial Intelligence Markup
-Language), implemented entirely in standard Python.  It strives for
-simple, austere, 100% compliance with the AIML 1.0.1 standard, no less
-and no more.
+AIML Bot is a fork of Cort Stratton's PyAIML, a pure-Python interpreter for
+AIML (Artificial Intelligence Markup Language), refactored for Pep 8
+conformance and ease of use.  It strives for simple, austere, 100% compliance
+with the AIML 1.0.1 standard, no less and no more. You can find Cort's original
+implementation at https://github.com/cdwfs/pyaiml. Many thanks go to him for
+laying the groundwork for this project.
 
-This is currently pre-alpha software.  Use at your
-own risk!
+For information on what's new in this version, see the CHANGES.txt file.
 
-For information on what's new in this version, see the
-CHANGES.txt file.
+For information on the state of development, including the current level of
+AIML 1.0.1 compliance, see the SUPPORTED_TAGS.txt file.
 
-For information on the state of development, including 
-the current level of AIML 1.0.1 compliance, see the
-SUPPORTED_TAGS.txt file.
+Quick & dirty example (assuming you've installed the aiml_sets package):
 
-Quick & dirty example (assuming you've downloaded the
-"standard" AIML set):
+	import aiml_bot
 
-	import aiml
+	# The Bot class is the public interface to the AIML interpreter.
+	bot = aiml_bot.Bot(command='load std aiml')
 
-	# The Kernel object is the public interface to
-	# the AIML interpreter.
-	k = aiml.Kernel()
-
-	# Use the 'learn' method to load the contents
-	# of an AIML file into the Kernel.
-	k.learn("std-startup.xml")
-
-	# Use the 'respond' method to compute the response
-	# to a user's input string.  respond() returns
-	# the interpreter's response, which in this case
-	# we ignore.
-	k.respond("load aiml b")
-
-	# Loop forever, reading user input from the command
-	# line and printing responses.
-	while True: print k.respond(raw_input("> "))
+	# Loop forever, reading user input from the command line and printing
+	# responses.
+	while True:
+        # Use the 'respond' method to compute the response to a user's input
+        # string.  respond() returns the interpreter's response.
+	    print(bot.respond(input("> ")))

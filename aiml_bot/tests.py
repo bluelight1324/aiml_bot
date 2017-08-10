@@ -2,9 +2,12 @@ import os
 import sys
 import time
 
-from .kernel import Kernel
+from .bot import Bot, BOOTSTRAP_AIML_PATH
 from .utilities import split_sentences
 from .word_substitutions import WordSub
+
+
+SELF_TEST_AIML_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'self-test.aiml'))
 
 
 def test_split_sentences():
@@ -37,17 +40,15 @@ def test_word_sub():
         print("Test #2 FAILED: '%s'" % subber.sub(text))
 
 
-def test_kernel():
-    """Run some self-tests on the Kernel."""
-    k = Kernel()
-    base_path = os.path.dirname(__file__)
-    k.bootstrap(learn=[os.path.join(base_path, "bootstrap.aiml"), os.path.join(base_path, "self-test.aiml")])
+def test_bot():
+    """Run some self-tests on the Bot."""
+    k = Bot(learn=[BOOTSTRAP_AIML_PATH, SELF_TEST_AIML_PATH], commands="load std aiml")
 
     _num_tests = 0
     _num_passed = 0
 
-    def _testTag(kern: Kernel, tag: str, text: str, output_list: list):
-        """Tests 'tag' by feeding the Kernel 'input'.  If the result
+    def _testTag(kern: Bot, tag: str, text: str, output_list: list):
+        """Tests 'tag' by feeding the Bot 'input'.  If the result
         matches any of the strings in 'outputList', the test passes.
         """
         # noinspection PyGlobalUndefined
@@ -128,7 +129,7 @@ def test_kernel():
     _testTag(k, 'topicstar test #2', 'test topicstar multiple', ["Both Soylents Ham and Cheese are made of people!"])
     _testTag(k, 'unicode support', "ÔÇÉÏºÃ", ["Hey, you speak Chinese! ÔÇÉÏºÃ"])
     _testTag(k, 'uppercase', 'test uppercase', ["The Last Word Should Be UPPERCASE"])
-    _testTag(k, 'version', 'test version', ["PyAIML is version %s" % k.version])
+    _testTag(k, 'version', 'test version', ["AIML Bot is version %s" % k.version])
     _testTag(k, 'whitespace preservation', 'test whitespace',
              ["Extra   Spaces\n   Rule!   (but not in here!)    But   Here   They   Do!"])
 
@@ -146,7 +147,7 @@ def test_kernel():
 
 def stress_test(output_file: str = None):
     """
-    This is the PyAIML stress test.  It creates two bots, and connects them in
+    This is the AIML Bot stress test. It creates two bots, and connects them in
     a cyclic loop.  A lot of output is generated; piping the results to a file
     is highly recommended.
     """
@@ -161,18 +162,12 @@ def stress_test(output_file: str = None):
         close_output = False
 
     try:
-        # Create the kernels
-        kern1 = Kernel()
-        kern1.verbose = False
-        kern2 = Kernel()
-        kern2.verbose = False
-
-        # Initialize the kernels
-        print("Initializing Kernel #1", file=output_file)
-        kern1.bootstrap()
-        kern1.save_brain("stress.brn")
-        print("\nInitializing Kernel #2", file=output_file)
-        kern2.bootstrap(brain_file="stress.brn")
+        # Create the bots
+        print("Initializing Bot #1", file=output_file)
+        bot1 = Bot(commands='load all aiml', verbose=False)
+        bot1.save_brain("stress.brn")
+        print("\nInitializing Bot #2", file=output_file)
+        bot2 = Bot(brain_file="stress.brn", verbose=False)
         os.remove("stress.brn")
 
         # Start the bots off with some basic input.
@@ -180,9 +175,9 @@ def stress_test(output_file: str = None):
 
         # Off they go!
         while True:
-            response = kern1.respond(response).strip()
+            response = bot1.respond(response).strip()
             print("1:", response, file=output_file)
-            response = kern2.respond(response).strip()
+            response = bot2.respond(response).strip()
             print("2:", response, file=output_file)
             # If the robots have run out of things to say, force one of them
             # to break the ice.

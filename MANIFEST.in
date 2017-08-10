@@ -1,3 +1,2 @@
 include *.txt
-include aiml/*.aiml
-prune standard
+include aiml_bot/*.aiml

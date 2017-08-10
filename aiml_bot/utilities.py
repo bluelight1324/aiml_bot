@@ -1,6 +1,6 @@
 """
 This file contains assorted general utility functions used by other
-modules in the PyAIML package.
+modules in the aiml_bot package.
 """
 
 

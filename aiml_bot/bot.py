@@ -31,7 +31,7 @@ else:
             aiml_sets.install(set_name, destination_path=AIML_INSTALL_PATH)
 
 
-__version__ = '0.8.6'
+__version__ = '0.0'
 
 
 DEFAULT_ENCODING = 'utf-8'
@@ -43,17 +43,19 @@ OUTPUT_HISTORY = "<OUTPUT HISTORY>"  # keys to a queue (list) of recent response
 INPUT_STACK = "<INPUT STACK>"  # Should always be empty in between calls to respond()
 
 
-class Kernel:
+BOOTSTRAP_AIML_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'bootstrap.aiml'))
+
+
+class Bot:
     """
-    The AIML response engine.
+    The AIML bot.
     """
 
     _max_history_size = 10  # maximum length of the _inputs and _responses lists
     _max_recursion_depth = 100  # maximum number of recursive <srai>/<sr> tags before the response is aborted.
 
-    def __init__(self):
-        self._verbose_mode = True
-        # self._version = "PyAIML 0.8.6"
+    def __init__(self, brain_file: str = None, learn=None, commands=None, verbose: bool = True) -> None:
+        self._verbose_mode = verbose
         self._brain = PatternManager()
         self._respond_lock = threading.RLock()
         self._text_encoding = DEFAULT_ENCODING
@@ -74,27 +76,32 @@ class Kernel:
             'normal': WordSub(default_normal)
         }
 
-    def bootstrap(self, brain_file=None, learn=None, commands=None):
-        """Prepare a Kernel object for use.
+        self.bootstrap(brain_file, learn, commands)
 
-        If a brainFile argument is provided, the Kernel attempts to
+    def bootstrap(self, brain_file: str = None, learn=None, commands=None) -> None:
+        """Prepare a Bot object for use.
+
+        If a brainFile argument is provided, the Bot attempts to
         load the brain at the specified filename.
 
-        If learnFiles is provided, the Kernel attempts to load the
+        If learnFiles is provided, the Bot attempts to load the
         specified AIML files.
 
         Finally, each of the input strings in the commands list is
         passed to respond().
         """
+        loaded_brain = False
+
         start = time.clock()
-        if brain_file:
+        if brain_file and os.path.isfile(brain_file):
             self.load_brain(brain_file)
+            loaded_brain = True
 
         if learn is None:
-            if brain_file is None:
-                learn = [os.path.join(os.path.dirname(__file__), 'bootstrap.aiml')]
-            else:
+            if loaded_brain:
                 learn = []
+            else:
+                learn = [BOOTSTRAP_AIML_PATH]
         elif isinstance(learn, str):
             # learnFiles might be a string, in which case it should be
             # turned into a single-element list.
@@ -102,13 +109,11 @@ class Kernel:
         else:
             learn = learn
         for file in learn:
+            file = os.path.abspath(os.path.expanduser(file))
             self.learn(file)
 
         if commands is None:
-            if brain_file is None:
-                commands = ['load std aiml']
-            else:
-                commands = []
+            commands = []
         elif isinstance(commands, str):
             # ditto for commands
             commands = [commands]
@@ -116,7 +121,7 @@ class Kernel:
             print(self._respond(cmd, DEFAULT_SESSION_ID))
             
         if self._verbose_mode:
-            print("Kernel bootstrap completed in %.2f seconds" % (time.clock() - start))
+            print("Bot bootstrap completed in %.2f seconds" % (time.clock() - start))
 
     @property
     def verbose(self) -> bool:
@@ -130,8 +135,8 @@ class Kernel:
 
     @property
     def version(self) -> str:
-        """Return the Kernel's version string."""
-        return 'PyAIML ' + __version__
+        """Return the Bot's version string."""
+        return 'AIML Bot ' + __version__
 
     @property
     def text_encoding(self) -> str:
@@ -145,7 +150,7 @@ class Kernel:
 
     @property
     def category_count(self) -> int:
-        """Return the number of categories the Kernel has learned."""
+        """Return the number of categories the Bot has learned."""
         # there's a one-to-one mapping between templates and categories
         return self._brain.template_count
 
@@ -351,7 +356,7 @@ class Kernel:
                     print("done (%.2f seconds)" % (time.clock() - start))
 
     def respond(self, text: str, session_id: str = None) -> str:
-        """Return the Kernel's response to the input string."""
+        """Return the Bot's response to the input string."""
         if not text:
             return ""
 
@@ -667,7 +672,7 @@ class Kernel:
         """ Process an <id> AIML element.
 
         <id> elements return a unique "user id" for a specific
-        conversation.  In PyAIML, the user id is the name of the
+        conversation. In AIML Bot, the user id is the name of the
         current session.
         """
         return session_id
@@ -702,7 +707,7 @@ class Kernel:
         then run the results through a server-side Javascript
         interpreter to compute the final response.  Implementations
         are not required to provide an actual Javascript interpreter,
-        and right now PyAIML doesn't; <javascript> elements are behave
+        and right now AIML Bot doesn't; <javascript> elements are behave
         exactly like <think> elements.
         """        
         return self._process_think(element, session_id)
@@ -892,7 +897,7 @@ class Kernel:
         # fetch the user's last input
         input_stack = self.get_input_stack(session_id)
         text_input = self._subbers['normal'].sub(input_stack[-1])
-        # fetch the Kernel's last response (for 'that' context)
+        # fetch the Bot's last response (for 'that' context)
         output_history = self.get_output_history(session_id)
         if output_history:
             that = self._subbers['normal'].sub(output_history[-1])
@@ -993,7 +998,7 @@ class Kernel:
 
         <that> elements (when they appear inside <template> elements)
         are the output equivalent of <input> elements; they return one
-        of the Kernel's previous responses.
+        of the Bot's previous responses.
         """
         output_history = self.get_output_history(session_id)
 
@@ -1042,7 +1047,7 @@ class Kernel:
         # fetch the user's last input
         input_stack = self.get_input_stack(session_id)
         text_input = self._subbers['normal'].sub(input_stack[-1])
-        # fetch the Kernel's last response (for 'that' context)
+        # fetch the Bot's last response (for 'that' context)
         output_history = self.get_output_history(session_id)
         if output_history:
             that = self._subbers['normal'].sub(output_history[-1])
@@ -1081,7 +1086,7 @@ class Kernel:
         # fetch the user's last input
         input_stack = self.get_input_stack(session_id)
         text_input = self._subbers['normal'].sub(input_stack[-1])
-        # fetch the Kernel's last response (for 'that' context)
+        # fetch the Bot's last response (for 'that' context)
         output_history = self.get_output_history(session_id)
         if output_history:
             that = self._subbers['normal'].sub(output_history[-1])
