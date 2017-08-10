@@ -1,6 +1,6 @@
 version 0.8.6
  - Fixed WorbSub module to work with words that consist entirely of punctuation :-).
- - Fixed PatternMgr module to replace non-alphanumerics with whitespace instead of simply
+ - Fixed PatternManager module to replace non-alphanumerics with whitespace instead of simply
    consuming them (thanks to Hugh Sasse for the patch).
  - Added workaround to avoid a rare IOError exception when processing <system> tags
    (thanks to Duncan Gough for the patch).
@@ -13,7 +13,7 @@ version 0.8.5
    with the AIML 1.0.1 standard.  Basically, whitespace will be stripped
    down to readable levels, unless the xml:space attribute is used to
    indicate otherwise.
- - Fixed bug in PatternMgr where the character '1' was mistaken identified
+ - Fixed bug in PatternManager where the character '1' was mistaken identified
    as punctuation to be stripped, instead of the intended '!'.
 
 version 0.8.4:

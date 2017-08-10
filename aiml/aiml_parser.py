@@ -218,7 +218,7 @@ class AimlHandler(ContentHandler):
         elif self._state == self._STATE_InsidePattern:
             # Certain tags are allowed inside <pattern> elements.
             if name == "bot" and 'name' in attr and attr["name"] == "name":
-                # Insert a special character string that the PatternMgr will
+                # Insert a special character string that the PatternManager will
                 # replace with the bot's name.
                 self._currentPattern += " BOT_NAME "
             else:
@@ -226,7 +226,7 @@ class AimlHandler(ContentHandler):
         elif self._state == self._STATE_InsideThat:
             # Certain tags are allowed inside <that> elements.
             if name == "bot" and 'name' in attr and attr["name"] == "name":
-                # Insert a special character string that the PatternMgr will
+                # Insert a special character string that the PatternManager will
                 # replace with the bot's name.
                 self._currentThat += " BOT_NAME "
             else:

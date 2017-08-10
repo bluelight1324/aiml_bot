@@ -36,7 +36,7 @@ to a Windows-style INI file with the following format:
     what's = what is
 """
 
-defaultGender = {
+default_gender = {
     # masculine -> feminine
     "he": "she",
     "him": "her",
@@ -50,7 +50,7 @@ defaultGender = {
     "herself": "himself",
 }
 
-defaultPerson = {
+default_person = {
     # 1st->3rd (masculine)
     "I": "he",
     "me": "him",
@@ -71,7 +71,7 @@ defaultPerson = {
     "herself": "myself",
 }
 
-defaultPerson2 = {
+default_person2 = {
     # 1st -> 2nd
     "I": "you",
     "me": "you",
@@ -88,7 +88,7 @@ defaultPerson2 = {
 
 
 # TODO: this list is far from complete
-defaultNormal = {
+default_normal = {
     "wanna": "want to",
     "gonna": "going to",
 

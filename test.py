@@ -25,7 +25,7 @@ if not force_reload:
     # noinspection PyBroadException
     try:
         # The optional branFile argument specifies a brain file to load.
-        kern.bootstrap(brainFile="standard.brn")
+        kern.bootstrap(brain_file="standard.brn")
         brainLoaded = True
     except Exception:
         print("Error loading saved brain file:")
@@ -38,11 +38,11 @@ if force_reload:
     # optional learnFiles argument is a file (or list of files) to load.
     # The optional commands argument is a command (or list of commands)
     # to run after the files are loaded.
-    kern.bootstrap(learnFiles="std-startup.xml", commands="load aiml b")
+    kern.bootstrap(learn="std-startup.xml", commands="load aiml b")
     brainLoaded = True
     # Now that we've loaded the brain, save it to speed things up for
     # next time.
-    kern.saveBrain("standard.brn")
+    kern.save_brain("standard.brn")
 
 assert brainLoaded, "The brain file was not loaded."
 

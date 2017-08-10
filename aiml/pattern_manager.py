@@ -9,7 +9,10 @@ import pprint
 import re
 
 
-class PatternMgr:
+PUNCTUATION = "\"`~!@#$%^&*()-_=+[{]}\|;:',<.>/?"
+
+
+class PatternManager:
     """
     This class implements the AIML pattern-matching algorithm described
     by Dr. Richard Wallace at the following site:
@@ -26,59 +29,58 @@ class PatternMgr:
 
     def __init__(self):
         self._root = {}
-        self._templateCount = 0
-        self._botName = "Nameless"
-        punctuation = "\"`~!@#$%^&*()-_=+[{]}\|;:',<.>/?"
-        self._puncStripRE = re.compile("[" + re.escape(punctuation) + "]")
-        self._whitespaceRE = re.compile("\s+")
+        self._template_count = 0
+        self._bot_name = "Nameless"
+        self._punctuation_re = re.compile("[" + re.escape(PUNCTUATION) + "]")
+        self._whitespace_re = re.compile("\s+")
 
-    def numTemplates(self):
+    @property
+    def template_count(self) -> int:
         """Return the number of templates currently stored."""
-        return self._templateCount
+        return self._template_count
 
-    def setBotName(self, name):
+    @property
+    def bot_name(self) -> str:
+        return self._bot_name
+
+    @bot_name.setter
+    def bot_name(self, value: str) -> None:
         """Set the name of the bot, used to match <bot name="name"> tags in
-        patterns.  The name must be a single word!
-
-        """
+        patterns.  The name must be a single word!"""
         # Collapse a multi-word name into a single word
-        self._botName = ' '.join(name.split())
+        self._bot_name = ''.join(value.split())
 
-    def dump(self):
+    def dump(self) -> None:
         """Print all learned patterns, for debugging purposes."""
         pprint.pprint(self._root)
 
-    def save(self, filename):
+    def save(self, filename: str) -> None:
         """Dump the current patterns to the file specified by filename.  To
-        restore later, use restore().
+        restore later, use restore()."""
+        try:
+            with open(filename, "wb") as file:
+                marshal.dump(self._template_count, file)
+                marshal.dump(self._bot_name, file)
+                marshal.dump(self._root, file)
+        except:
+            print("Error saving PatternManager to file %s:" % filename)
+            raise
 
+    def restore(self, filename: str) -> None:
+        """Restore a previously saved collection of patterns."""
+        try:
+            with open(filename, "rb") as file:
+                self._template_count = marshal.load(file)
+                self._bot_name = marshal.load(file)
+                self._root = marshal.load(file)
+        except:
+            print("Error restoring PatternManager from file %s:" % filename)
+            raise
+
+    def add(self, pattern: str, that: str, topic: str, template: list) -> None:
         """
-        try:
-            outFile = open(filename, "wb")
-            marshal.dump(self._templateCount, outFile)
-            marshal.dump(self._botName, outFile)
-            marshal.dump(self._root, outFile)
-            outFile.close()
-        except Exception:
-            print("Error saving PatternMgr to file %s:" % filename)
-            raise
-
-    def restore(self, filename):
-        """Restore a previously save()d collection of patterns."""
-        try:
-            inFile = open(filename, "rb")
-            self._templateCount = marshal.load(inFile)
-            self._botName = marshal.load(inFile)
-            self._root = marshal.load(inFile)
-            inFile.close()
-        except Exception:
-            print("Error restoring PatternMgr from file %s:" % filename)
-            raise
-
-    def add(self, pattern, that, topic, template):
-        """Add a [pattern/that/topic] tuple and its corresponding template
+        Add a [pattern/that/topic] tuple and its corresponding template
         to the node tree.
-
         """
 
         # TODO: make sure words contains only legal characters
@@ -131,7 +133,7 @@ class PatternMgr:
 
         # add the template.
         if self._TEMPLATE not in node:
-            self._templateCount += 1
+            self._template_count += 1
         node[self._TEMPLATE] = template
 
     def match(self, pattern, that, topic):
@@ -140,22 +142,21 @@ class PatternMgr:
         parameter contains the current topic of conversation.
 
         Returns None if no template is found.
-
         """
-        if len(pattern) == 0:
+        if not pattern:
             return None
         # Mutilate the input.  Remove all punctuation and convert the text to all caps.
         text_input = pattern.upper()
-        text_input = re.sub(self._puncStripRE, " ", text_input)
+        text_input = re.sub(self._punctuation_re, " ", text_input)
         if that.strip() == "":
             that = "ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
         thatInput = that.upper()
-        thatInput = re.sub(self._puncStripRE, " ", thatInput)
-        thatInput = re.sub(self._whitespaceRE, " ", thatInput)
+        thatInput = re.sub(self._punctuation_re, " ", thatInput)
+        thatInput = re.sub(self._whitespace_re, " ", thatInput)
         if topic.strip() == "":
             topic = "ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
         topicInput = topic.upper()
-        topicInput = re.sub(self._puncStripRE, " ", topicInput)
+        topicInput = re.sub(self._punctuation_re, " ", topicInput)
 
         # Pass the input off to the recursive call
         patMatch, template = self._match(text_input.split(), thatInput.split(), topicInput.split(), self._root)
@@ -174,18 +175,18 @@ class PatternMgr:
         # Mutilate the input.  Remove all punctuation and convert the
         # text to all caps.
         text_input = pattern.upper()
-        text_input = re.sub(self._puncStripRE, " ", text_input)
-        text_input = re.sub(self._whitespaceRE, " ", text_input)
+        text_input = re.sub(self._punctuation_re, " ", text_input)
+        text_input = re.sub(self._whitespace_re, " ", text_input)
         if that.strip() == "":
             that = "ULTRABOGUSDUMMYTHAT"  # 'that' must never be empty
         thatInput = that.upper()
-        thatInput = re.sub(self._puncStripRE, " ", thatInput)
-        thatInput = re.sub(self._whitespaceRE, " ", thatInput)
+        thatInput = re.sub(self._punctuation_re, " ", thatInput)
+        thatInput = re.sub(self._whitespace_re, " ", thatInput)
         if topic.strip() == "":
             topic = "ULTRABOGUSDUMMYTOPIC"  # 'topic' must never be empty
         topicInput = topic.upper()
-        topicInput = re.sub(self._puncStripRE, " ", topicInput)
-        topicInput = re.sub(self._whitespaceRE, " ", topicInput)
+        topicInput = re.sub(self._punctuation_re, " ", topicInput)
+        topicInput = re.sub(self._whitespace_re, " ", topicInput)
 
         # Pass the input off to the recursive pattern-matcher
         patMatch, template = self._match(text_input.split(), thatInput.split(), topicInput.split(), self._root)
@@ -325,7 +326,7 @@ class PatternMgr:
                 return newPattern, template
 
         # check bot name
-        if self._BOT_NAME in root and first == self._botName:
+        if self._BOT_NAME in root and first == self._bot_name:
             pattern, template = self._match(suffix, thatWords, topicWords, root[self._BOT_NAME])
             if template is not None:
                 newPattern = [first] + pattern

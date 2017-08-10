@@ -8,16 +8,16 @@ import aiml
 
 # Create the kernels
 kern1 = aiml.Kernel()
-kern1.verbose(False)
+kern1.verbose = False
 kern2 = aiml.Kernel()
-kern2.verbose(False)
+kern2.verbose = False
 
 # Initialize the kernels
 print("Initializing Kernel #1")
-kern1.bootstrap(learnFiles="std-startup.xml", commands="load aiml b")
-kern1.saveBrain("standard.brn")
+kern1.bootstrap(learn="std-startup.xml", commands="load aiml b")
+kern1.save_brain("standard.brn")
 print("\nInitializing Kernel #2")
-kern2.bootstrap(brainFile="standard.brn")
+kern2.bootstrap(brain_file="standard.brn")
 
 # Start the bots off with some basic input.
 response = "askquestion"

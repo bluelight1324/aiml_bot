@@ -76,7 +76,7 @@ def main():
         # noinspection PyBroadException
         try:
             # The optional branFile argument specifies a brain file to load.
-            kern.bootstrap(brainFile=brain_path)
+            kern.bootstrap(brain_file=brain_path)
             brain_loaded = True
         except Exception:
             print("Error loading saved brain file:")
@@ -96,7 +96,7 @@ def main():
         brain_loaded = True
         # Now that we've loaded the brain, save it to speed things up for
         # next time.
-        kern.saveBrain(brain_path)
+        kern.save_brain(brain_path)
 
     assert brain_loaded, "The brain file was not loaded."
 
@@ -108,6 +108,6 @@ def main():
         except KeyboardInterrupt:
             break
 
-    kern.saveBrain(brain_path)
+    kern.save_brain(brain_path)
 
     return 0

@@ -4,7 +4,7 @@ modules in the PyAIML package.
 """
 
 
-def sentences(s):
+def split_sentences(s: str) -> list:
     """Split the string s into a list of sentences."""
     if not isinstance(s, str):
         raise TypeError("s must be a string")
@@ -37,5 +37,5 @@ def sentences(s):
 # Self test
 if __name__ == "__main__":
     # sentences
-    results = sentences("First.  Second, still?  Third and Final!  Well, not really")
+    results = split_sentences("First.  Second, still?  Third and Final!  Well, not really")
     assert(len(results) == 4)
