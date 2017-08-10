@@ -1018,8 +1018,8 @@ class Kernel:
             return previous_output
 
         sentences = split_sentences(previous_output)
-        if len(sentences) > sentence_index:
-            return split_sentences(previous_output)[sentence_index]
+        if 0 < sentence_index <= len(sentences):
+            return split_sentences(previous_output)[sentence_index - 1]
         else:
             if self._verbose_mode:
                 err = "No such sentence index %d while processing <that> element.\n" % sentence_index
@@ -1190,7 +1190,7 @@ def test_kernel():
     _testTag(k, 'sr nested', "test nested sr test srai", ["srai results: srai test passed"])
     _testTag(k, 'srai', "test srai", ["srai test passed"])
     _testTag(k, 'srai infinite', "test srai infinite", [""])
-    _testTag(k, 'star test #1', 'You should test star begin', ['Begin star matched: You should']) 
+    _testTag(k, 'star test #1', 'intro scroll test star begin', ['Begin star matched: intro scroll'])
     _testTag(k, 'star test #2', 'test star creamy goodness middle', ['Middle star matched: creamy goodness'])
     _testTag(k, 'star test #3', 'test star end the credits roll', ['End star matched: the credits roll'])
     _testTag(k, 'star test #4', 'test star having multiple stars in a pattern makes me extremely happy',

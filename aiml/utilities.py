@@ -4,33 +4,33 @@ modules in the PyAIML package.
 """
 
 
-def split_sentences(s: str) -> list:
+def split_sentences(text: str) -> list:
     """Split the string s into a list of sentences."""
-    if not isinstance(s, str):
+    if not isinstance(text, str):
         raise TypeError("s must be a string")
-    pos = 0
+    position = 0
     sentenceList = []
-    l = len(s)
-    while pos < l:
+    l = len(text)
+    while position < l:
         try:
-            p = s.index('.', pos)
+            period = text.index('.', position)
         except ValueError:
-            p = l + 1
+            period = l + 1
         try:
-            q = s.index('?', pos)
+            question = text.index('?', position)
         except ValueError:
-            q = l + 1
+            question = l + 1
         try:
-            e = s.index('!', pos)
+            exclamation = text.index('!', position)
         except ValueError:
-            e = l + 1
-        end = min(p, q, e)
-        sentenceList.append(s[pos:end].strip())
-        pos = end+1
+            exclamation = l + 1
+        end = min(period, question, exclamation) + 1
+        sentenceList.append(text[position:end].strip())
+        position = end
     # If no sentences were found, return a one-item list containing
     # the entire input string.
     if len(sentenceList) == 0:
-        sentenceList.append(s)
+        sentenceList.append(text)
     return sentenceList
 
 
