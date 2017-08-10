@@ -164,7 +164,7 @@ def stress_test(output_file: str = None):
     try:
         # Create the bots
         print("Initializing Bot #1", file=output_file)
-        bot1 = Bot(commands='load all aiml', verbose=False)
+        bot1 = Bot(commands='load std aiml', verbose=False)
         bot1.save_brain("stress.brn")
         print("\nInitializing Bot #2", file=output_file)
         bot2 = Bot(brain_file="stress.brn", verbose=False)
