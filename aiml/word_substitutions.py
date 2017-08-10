@@ -36,10 +36,7 @@ class WordSub(dict):
     @staticmethod
     def _wordToRegex(word):
         """Convert a word to a regex object which matches the word."""
-        if word != "" and word[0].isalpha() and word[-1].isalpha():
-            return "\\b%s\\b" % re.escape(word)
-        else: 
-            return r"\b%s\b" % re.escape(word)
+        return r"\b%s\b" % re.escape(word)
     
     def _update_regex(self):
         """Build re object based on the keys of the current
@@ -49,11 +46,16 @@ class WordSub(dict):
         self._regex = re.compile("|".join(map(self._wordToRegex, self.keys())))
         self._regexIsDirty = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, values=None):
         """Initialize the object, and populate it with the entries in
         the defaults dictionary.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__()
+        if values:
+            if isinstance(values, dict):
+                values = values.items()
+            for key, value in values:
+                self[key] = value
         self._regex = None
         self._regexIsDirty = True
 
@@ -64,9 +66,9 @@ class WordSub(dict):
     def __setitem__(self, i, y):
         self._regexIsDirty = True
         # for each entry the user adds, we actually add three entries:
-        super(type(self), self).__setitem__(i.lower(), y.lower())  # key = value
-        super(type(self), self).__setitem__(i.title(), y.title())  # Key = Value
-        super(type(self), self).__setitem__(i.upper(), y.upper())  # KEY = VALUE
+        super().__setitem__(i.lower(), y.lower())  # key = value
+        super().__setitem__(i.title(), y.title())  # Key = Value
+        super().__setitem__(i.upper(), y.upper())  # KEY = VALUE
 
     def sub(self, text):
         """Translate text, returns the modified text."""

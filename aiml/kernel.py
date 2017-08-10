@@ -13,6 +13,7 @@ import copy
 import glob
 import os
 import random
+import re
 import string
 import sys
 import threading
@@ -74,41 +75,6 @@ class Kernel:
             'normal': WordSub(default_normal)
         }
 
-        # set up the element processors
-        # self._element_processors = {
-        #     "bot":          self._process_bot,
-        #     "condition":    self._process_condition,
-        #     "date":         self._process_date,
-        #     "formal":       self._process_formal,
-        #     "gender":       self._process_gender,
-        #     "get":          self._process_get,
-        #     "gossip":       self._process_gossip,
-        #     "id":           self._process_id,
-        #     "input":        self._process_input,
-        #     "javascript":   self._process_javascript,
-        #     "learn":        self._process_learn,
-        #     "li":           self._process_li,
-        #     "lowercase":    self._process_lowercase,
-        #     "person":       self._process_person,
-        #     "person2":      self._process_person2,
-        #     "random":       self._process_random,
-        #     "text":         self._process_text,
-        #     "sentence":     self._process_sentence,
-        #     "set":          self._process_set,
-        #     "size":         self._process_size,
-        #     "sr":           self._process_sr,
-        #     "srai":         self._process_srai,
-        #     "star":         self._process_star,
-        #     "system":       self._process_system,
-        #     "template":     self._process_template,
-        #     "that":         self._process_that,
-        #     "thatstar":     self._process_thatstar,
-        #     "think":        self._process_think,
-        #     "topicstar":    self._process_topicstar,
-        #     "uppercase":    self._process_uppercase,
-        #     "version":      self._process_version,
-        # }
-
     def bootstrap(self, brain_file=None, learn=None, commands=None):
         """Prepare a Kernel object for use.
 
@@ -120,7 +86,6 @@ class Kernel:
 
         Finally, each of the input strings in the commands list is
         passed to respond().
-
         """
         start = time.clock()
         if brain_file:
@@ -179,10 +144,11 @@ class Kernel:
         """Set the text encoding used when loading AIML files (Latin-1, UTF-8, etc.)."""
         self._text_encoding = value
 
+    @property
     def category_count(self) -> int:
         """Return the number of categories the Kernel has learned."""
         # there's a one-to-one mapping between templates and categories
-        return self._brain.template_count()
+        return self._brain.template_count
 
     def reset_brain(self) -> None:
         """Reset the brain to its initial state."""
@@ -238,36 +204,42 @@ class Kernel:
         self._sessions[session_id][name] = value
 
     def get_input_history(self, session_id: str = None) -> list:
+        """Get the input history for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
         return self._sessions[session_id][INPUT_HISTORY]
 
     def set_input_history(self, history: list, session_id: str = None) -> None:
+        """Set the input history for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
         self._sessions[session_id][INPUT_HISTORY] = history
 
     def get_output_history(self, session_id: str = None) -> list:
+        """Get the output history for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
         return self._sessions[session_id][OUTPUT_HISTORY]
 
     def set_output_history(self, history: list, session_id: str = None) -> None:
+        """Set the output history for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
         self._sessions[session_id][OUTPUT_HISTORY] = history
 
     def get_input_stack(self, session_id: str = None) -> list:
+        """Get the input stack for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
         return self._sessions[session_id][INPUT_STACK]
 
     def set_input_stack(self, stack: list, session_id: str = None) -> None:
+        """Set the input stack for the given session."""
         if session_id is None:
             session_id = DEFAULT_SESSION_ID
         self.add_session(session_id)
@@ -281,7 +253,6 @@ class Kernel:
         """Set the value of the specified bot predicate.
 
         If name is not a valid bot predicate, it will be created.
-
         """
         self._bot_predicates[name] = value
         # Clumsy hack: if updating the bot name, we must update the
@@ -496,7 +467,6 @@ class Kernel:
         items in the list are the elements enclosed by the current
         element's begin and end tags; they are handled by each
         element's handler function.
-
         """
         element_name = element[0]
         handler_name = '_process_' + element_name
@@ -524,7 +494,6 @@ class Kernel:
         <bot> elements are used to fetch the value of global,
         read-only "bot predicates."  These predicates cannot be set
         from within AIML; you must use the setBotPredicate() function.
-        
         """
         return self.get_bot_predicate(element[1]['name'])
         
@@ -556,7 +525,6 @@ class Kernel:
         case, except that each <li> subelement (except the optional
         last entry) must now include both 'name' and 'value'
         attributes.
-
         """        
         response = ""
         attributes = element[1]
@@ -639,7 +607,6 @@ class Kernel:
         <date> elements resolve to the current date and time.  The
         AIML specification doesn't require any particular format for
         this information, so I go with whatever's simplest.
-
         """        
         return time.asctime()
 
@@ -649,7 +616,6 @@ class Kernel:
 
         <formal> elements process their contents recursively, and then
         capitalize the first letter of each word of the result.
-
         """                
         response = ""
         for e in element[2:]:
@@ -663,7 +629,6 @@ class Kernel:
         <gender> elements process their contents, and then swap the
         gender of any third-person singular pronouns in the result.
         This substitution is handled by the aiml.WordSub module.
-
         """
         response = ""
         for e in element[2:]:
@@ -681,7 +646,6 @@ class Kernel:
 
         <get> elements return the value of a predicate from the
         specified session.
-
         """
         return self.get_predicate(element[1]['name'], session_id)
 
@@ -694,7 +658,6 @@ class Kernel:
         bot to learn from the people it chats with.  I haven't
         decided how to define my implementation, so right now
         <gossip> behaves identically to <think>.
-
         """        
         return self._process_think(element, session_id)
 
@@ -721,7 +684,6 @@ class Kernel:
 
         <input> elements return an entry from the input history for
         the current session.
-
         """        
         index = int(element[1].get('index', 1))
         input_history = self.get_input_history(session_id)
@@ -743,7 +705,6 @@ class Kernel:
         are not required to provide an actual Javascript interpreter,
         and right now PyAIML doesn't; <javascript> elements are behave
         exactly like <think> elements.
-
         """        
         return self._process_think(element, session_id)
     
@@ -772,7 +733,6 @@ class Kernel:
         the results. They can only appear inside <condition> and
         <random> elements.  See _processCondition() and
         _processRandom() for details of their usage.
- 
         """
         response = ""
         for e in element[2:]:
@@ -785,7 +745,6 @@ class Kernel:
 
         <lowercase> elements process their contents recursively, and
         then convert the results to all-lowercase.
-
         """
         response = ""
         for e in element[2:]:
@@ -803,7 +762,6 @@ class Kernel:
 
         If the <person> tag is used atomically (e.g. <person/>), it is
         a shortcut for <person><star/></person>.
-
         """
         response = ""
         for e in element[2:]:
@@ -823,7 +781,6 @@ class Kernel:
 
         If the <person2> tag is used atomically (e.g. <person2/>), it is
         a shortcut for <person2><star/></person2>.
-
         """
         response = ""
         for e in element[2:]:
@@ -842,7 +799,6 @@ class Kernel:
         processed recursively and have its results returned.  Only the
         chosen <li> element's contents are processed.  Any non-<li> contents are
         ignored.
-
         """
         list_items = []
         for e in element[2:]:
@@ -861,7 +817,6 @@ class Kernel:
 
         <sentence> elements process their contents recursively, and
         then capitalize the first letter of the results.
-
         """
         response = ""
         for e in element[2:]:
@@ -879,7 +834,6 @@ class Kernel:
         <set> elements process their contents recursively, and assign the results to a predicate
         (given by their 'name' attribute) in the current session.  The contents of the element
         are also returned.
-
         """
         value = ""
         for e in element[2:]:
@@ -894,9 +848,8 @@ class Kernel:
 
         <size> elements return the number of AIML categories currently
         in the bot's brain.
-
         """        
-        return str(self.category_count())
+        return str(self.category_count)
 
     # <sr>
     # noinspection PyUnusedLocal
@@ -904,7 +857,6 @@ class Kernel:
         """Process an <sr> AIML element.
 
         <sr> elements are shortcuts for <srai><star/></srai>.
-
         """
         star = self._process_element(['star', {}], session_id)
         return self._respond(star, session_id)
@@ -917,7 +869,6 @@ class Kernel:
         pass the results right back into the AIML interpreter as a new
         piece of input.  The results of this new input string are
         returned.
-
         """
         new_input = ""
         for e in element[2:]:
@@ -963,7 +914,6 @@ class Kernel:
         For cross-platform compatibility, any file paths inside
         <system> tags should use Unix-style forward slashes ("/") as a
         directory separator.
-
         """
         # build up the command string
         command = ""
@@ -1001,7 +951,6 @@ class Kernel:
         <template> elements recursively process their contents, and
         return the results.  <template> is the root node of any AIML
         response tree.
-
         """
         response = ""
         for e in element[2:]:
@@ -1019,7 +968,6 @@ class Kernel:
         string, which is immediately returned. They have a single attribute,
         automatically inserted by the parser, which indicates whether whitespace
         in the text should be preserved or not.
-        
         """
         if not isinstance(element[2], str):
             raise TypeError("Text element contents are not text")
@@ -1029,7 +977,9 @@ class Kernel:
         # space.  To improve performance, we do this only once for each
         # text element encountered, and save the results for the future.
         if element[1]["xml:space"] == "default":
-            element[2] = ' '.join(element[2].split())
+            # We can't just split and join because we need to preserve the
+            # leading and trailing spaces.
+            element[2] = re.sub('\s+', ' ', element[2])
             element[1]["xml:space"] = "preserve"
         return element[2]
 
@@ -1045,7 +995,6 @@ class Kernel:
         <that> elements (when they appear inside <template> elements)
         are the output equivalent of <input> elements; they return one
         of the Kernel's previous responses.
-
         """
         output_history = self.get_output_history(session_id)
 
@@ -1069,7 +1018,7 @@ class Kernel:
             return previous_output
 
         sentences = split_sentences(previous_output)
-        if len(sentences) >= sentence_index:
+        if len(sentences) > sentence_index:
             return split_sentences(previous_output)[sentence_index]
         else:
             if self._verbose_mode:
@@ -1089,7 +1038,6 @@ class Kernel:
         matched by a "*" character in the pattern, <thatstar/> returns
         the portion of the previous input string that was matched by a
         "*" in the current category's <that> pattern.
-
         """
         index = int(element[1].get('index', 1))
         # fetch the user's last input
@@ -1112,7 +1060,6 @@ class Kernel:
         discard the results and return the empty string.  They're
         useful for setting predicates and learning AIML files without
         generating any output.
-
         """
         for e in element[2:]:
             self._process_element(e, session_id)
@@ -1164,7 +1111,6 @@ class Kernel:
 
         <version> elements return the version number of the AIML
         interpreter.
-
         """
         return self.version
 
@@ -1172,30 +1118,33 @@ class Kernel:
 ##############################################
 # Self-test functions follow                 #
 ##############################################
-def _testTag(kern, tag, text, outputList):
-    """Tests 'tag' by feeding the Kernel 'input'.  If the result
-    matches any of the strings in 'outputList', the test passes.
-    
-    """
-    global _numTests, _numPassed
-    _numTests += 1
-    print("Testing <" + tag + ">:",)
-    response = kern.respond(text)
-    if response in outputList:
-        print("PASSED")
-        _numPassed += 1
-        return True
-    else:
-        print("FAILED (response: '%s')" % response)
-        return False
 
-if __name__ == "__main__":
-    # Run some self-tests
+
+def test_kernel():
+    """Run some self-tests on the Kernel."""
     k = Kernel()
-    k.bootstrap(learn="self-test.aiml")
+    base_path = os.path.dirname(__file__)
+    k.bootstrap(learn=[os.path.join(base_path, "bootstrap.aiml"), os.path.join(base_path, "self-test.aiml")])
 
-    _numTests = 0
-    _numPassed = 0
+    _num_tests = 0
+    _num_passed = 0
+
+    def _testTag(kern: Kernel, tag: str, text: str, output_list: list):
+        """Tests 'tag' by feeding the Kernel 'input'.  If the result
+        matches any of the strings in 'outputList', the test passes.
+        """
+        # noinspection PyGlobalUndefined
+        nonlocal _num_tests, _num_passed
+        _num_tests += 1
+        print("Testing <" + tag + ">:", )
+        response = kern.respond(text)
+        if response in output_list:
+            print("PASSED")
+            _num_passed += 1
+            return True
+        else:
+            print("FAILED (response: '%s')" % response)
+            return False
 
     _testTag(k, 'bot', 'test bot', ["My name is Nameless"])
 
@@ -1226,7 +1175,7 @@ if __name__ == "__main__":
     _testTag(k, 'gender', 'test gender', ["He'd told her he heard that her hernia is history"])
     _testTag(k, 'get/set', 'test get and set', ["I like cheese. My favorite food is cheese"])
     _testTag(k, 'gossip', 'test gossip', ["Gossip is not yet implemented"])
-    _testTag(k, 'id', 'test id', ["Your id is _global"])
+    _testTag(k, 'id', 'test id', ["Your id is anonymous"])
     _testTag(k, 'input', 'test input', ['You just said: test input'])
     _testTag(k, 'javascript', 'test javascript', ["Javascript is not yet implemented"])
     _testTag(k, 'lowercase', 'test lowercase', ["The Last Word Should Be lowercase"])
@@ -1236,7 +1185,7 @@ if __name__ == "__main__":
     _testTag(k, 'random', 'test random', ["response #1", "response #2", "response #3"])
     _testTag(k, 'random empty', 'test random empty', ["Nothing here!"])
     _testTag(k, 'sentence', "test sentence", ["My first letter should be capitalized."])
-    _testTag(k, 'size', "test size", ["I've learned %d categories" % k.category_count()])
+    _testTag(k, 'size', "test size", ["I've learned %d categories" % k.category_count])
     _testTag(k, 'sr', "test sr test srai", ["srai results: srai test passed"])
     _testTag(k, 'sr nested', "test nested sr test srai", ["srai results: srai test passed"])
     _testTag(k, 'srai', "test srai", ["srai test passed"])
@@ -1268,11 +1217,11 @@ if __name__ == "__main__":
 
     # Report test results
     print("--------------------")
-    if _numTests == _numPassed:
-        print("%d of %d tests passed!" % (_numPassed, _numTests))
+    if _num_tests == _num_passed:
+        print("%d of %d tests passed!" % (_num_passed, _num_tests))
     else:
-        print("%d of %d tests passed (see above for detailed errors)" % (_numPassed, _numTests))
+        print("%d of %d tests passed (see above for detailed errors)" % (_num_passed, _num_tests))
 
     # Run an interactive interpreter
-    #print "\nEntering interactive mode (ctrl-c to exit)"
-    #while True: print k.respond(raw_input("> "))
+    # print "\nEntering interactive mode (ctrl-c to exit)"
+    # while True: print k.respond(raw_input("> "))
