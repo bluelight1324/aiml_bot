@@ -124,6 +124,17 @@ class Bot:
             print("Bot bootstrap completed in %.2f seconds" % (time.clock() - start))
 
     @property
+    def name(self) -> str:
+        """The name of the bot."""
+        return self._brain.bot_name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        """The name of the bot."""
+        self._bot_predicates['name'] = value
+        self._brain.bot_name = value
+
+    @property
     def verbose(self) -> bool:
         """Verbose output mode."""
         return self._verbose_mode
