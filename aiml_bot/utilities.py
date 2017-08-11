@@ -4,31 +4,35 @@ modules in the aiml_bot package.
 """
 
 
+# TODO: Correctly handle abbreviations.
 def split_sentences(text: str) -> list:
     """Split the string s into a list of sentences."""
     if not isinstance(text, str):
-        raise TypeError("s must be a string")
+        raise TypeError(text)
     position = 0
-    sentenceList = []
-    l = len(text)
-    while position < l:
+    results = []
+    length = len(text)
+    while position < length:
         try:
             period = text.index('.', position)
         except ValueError:
-            period = l + 1
+            period = length + 1
         try:
             question = text.index('?', position)
         except ValueError:
-            question = l + 1
+            question = length + 1
         try:
             exclamation = text.index('!', position)
         except ValueError:
-            exclamation = l + 1
-        end = min(period, question, exclamation) + 1
-        sentenceList.append(text[position:end].strip())
-        position = end
+            exclamation = length + 1
+        end = min(period, question, exclamation)
+        sentence = text[position:end].strip()
+        if sentence:
+            results.append(sentence)
+        position = end + 1
     # If no sentences were found, return a one-item list containing
     # the entire input string.
-    if len(sentenceList) == 0:
-        sentenceList.append(text)
-    return sentenceList
+    if not results:
+        results.append(text.strip())
+    print(results)
+    return results
