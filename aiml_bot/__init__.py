@@ -12,6 +12,10 @@ __all__ = [
     'USAGE'
 ]
 
+__author__ = 'Cort Stratton'
+__maintainer__ = 'Aaron Hosford'
+__license__ = 'https://opensource.org/licenses/BSD-2-Clause'
+
 
 USAGE = """
 Usage:

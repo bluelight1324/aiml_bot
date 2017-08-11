@@ -4,7 +4,6 @@ Markup Language developed by Dr. Richard Wallace of the A.L.I.C.E. Foundation.
 It can be used to implement a conversational AI program.
 """
 
-# Command to build:
 from setuptools import setup
 import glob
 
@@ -15,17 +14,19 @@ setup(
     version="0.0",
     author="Cort Stratton",
     author_email="cort@cortstratton.org",
+    license="BSD-2-Clause",
     maintainer="Aaron Hosford",
     maintainer_email="hosford42@gmail.com",
     description="An interpreter package for AIML, the Artificial Intelligence Markup Language",
     long_description=__doc__,
     url="https://github.com/hosford42/aiml_bot",
+
     platforms=["any"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
         "Intended Audience :: Developers",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
         "Topic :: Communications :: Chat",
         "Topic :: Scientific/Engineering :: Artificial Intelligence"
