@@ -34,5 +34,5 @@ def split_sentences(text: str) -> list:
     # the entire input string.
     if not results:
         results.append(text.strip())
-    print(results)
+    # print(results)
     return results
