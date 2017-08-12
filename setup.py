@@ -63,7 +63,7 @@ def get_long_description():
 
 setup(
     name="AIML Bot",
-    version="0.0.2",
+    version="0.0.3",
     author="Cort Stratton",
     author_email="cort@cortstratton.org",
     license="BSD-2-Clause",
