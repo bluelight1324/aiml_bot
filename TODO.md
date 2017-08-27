@@ -12,3 +12,7 @@ Laundry list of future tasks, in no particular order:
  - Support the Program D startup file syntax, or something similar?  It
    seems to be a good way to initialize bot settings and substitutions.
  - Documentation/tutorials.
+ - Compare pattern manager to [pygtree](https://github.com/google/pygtrie) and 
+   look for opportunities to improve (or replace) it.
+ - Add reinforcement learning mechanisms wherever arbitrary choices are made,
+   e.g. the `<random>` tag.
